@@ -151,7 +151,7 @@ def test_rejects_non_tabular_request(
 ) -> None:
     config = ExplanationConfig()
     with pytest.raises(TypeError):
-        FactualTabularPromptTemplate().render(text_request, tabular_schema, config)  # type: ignore[arg-type]
+        FactualTabularPromptTemplate().render(text_request, tabular_schema, config)
 
 
 def test_system_prompt_mentions_target_name(
