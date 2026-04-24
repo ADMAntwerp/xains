@@ -14,6 +14,7 @@ dist/
 .venv/
 venv/
 env/
+.env
 
 # Testing / coverage
 .pytest_cache/
