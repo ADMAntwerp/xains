@@ -34,6 +34,12 @@ dev = [
     "mypy>=1.8",
     "ruff>=0.3",
     "pre-commit>=3.6",
+    "anthropic>=0.96,<1.0",
+    "vcrpy>=8.1,<9",
+    "pytest-recording>=0.13,<0.14",
+]
+anthropic = [
+    "anthropic>=0.96,<1.0",
 ]
 
 [project.urls]
@@ -87,6 +93,9 @@ plugins = ["pydantic.mypy"]
 module = "tests.*"
 disallow_untyped_defs = false
 
+[[tool.mypy.overrides]]
+module = ["anthropic", "anthropic.*"]
+ignore_missing_imports = true
 # ---------- Pytest ----------
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -14,7 +14,14 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class LLMResponse(BaseModel):
-    """Normalized response from any provider."""
+    """Normalized response from any provider.
+
+    ``tokens_used`` is either ``None`` (provider did not report usage) or a
+    dict with **exactly** three integer keys: ``"input"``, ``"output"``, and
+    ``"total"``, where ``total == input + output``. Providers normalize at
+    the boundary; partial dicts are not permitted. See ADR 0005
+    (``docs/decisions/0005-llmresponse-tokens-schema.md``).
+    """
 
     model_config = ConfigDict(extra="forbid")
 
