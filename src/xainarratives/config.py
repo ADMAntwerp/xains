@@ -35,3 +35,6 @@ class ExplanationConfig(BaseModel):
     # request (see Explainer._resolve_mode). Setting an explicit value forces
     # that mode and is an error if the request doesn't support it.
     mode: ExplanationModeOrAuto = "auto"
+
+    run_guardrails: bool = True
+    extract_narrative: bool = True

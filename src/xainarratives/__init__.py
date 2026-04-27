@@ -7,6 +7,7 @@ for the architectural overview.
 
 from xainarratives.config import ExplanationConfig
 from xainarratives.explainer import Explainer
+from xainarratives.guardrails import FeatureClaim, GuardrailResult, NarrativeExtraction
 from xainarratives.schema import (
     DatasetSchema,
     FeatureSchema,
@@ -46,14 +47,17 @@ __all__ = [
     "ExplanationMode",
     "ExplanationRequest",
     "ExplanationResult",
+    "FeatureClaim",
     "FeatureSchema",
     "GraphCounterfactual",
     "GraphExplanationRequest",
     "GraphSpec",
+    "GuardrailResult",
     "ImageCounterfactual",
     "ImageExplanationRequest",
     "ImageSpec",
     "Modality",
+    "NarrativeExtraction",
     "NodeContribution",
     "Prediction",
     "RegionContribution",

@@ -203,3 +203,11 @@ class ExplanationResult(BaseModel):
     model_name: str
     tokens_used: dict[str, int] | None = None
     latency_ms: float | None = Field(default=None, ge=0.0)
+    guardrails: "list[GuardrailResult] | None" = None
+    narrative_extraction: "NarrativeExtraction | None" = None
+    guardrail_tokens_used: dict[str, int] | None = None
+
+
+from xainarratives.guardrails.types import GuardrailResult, NarrativeExtraction  # noqa: E402
+
+ExplanationResult.model_rebuild()

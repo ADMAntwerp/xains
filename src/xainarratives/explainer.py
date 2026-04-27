@@ -8,7 +8,7 @@ Responsibilities:
 4. Call the configured ``LLMProvider``.
 5. Package the result with audit metadata.
 
-Not in v0: guardrails, caching, retries, streaming, batch, eval pipeline.
+Not in v0: caching, retries, streaming, batch, eval pipeline.
 Each gets its own PR and its own ADR.
 """
 
@@ -16,10 +16,17 @@ import time
 import warnings
 
 from xainarratives.config import ExplanationConfig, ExplanationModeOrAuto
+from xainarratives.guardrails import class_name_mentioned, extract_narrative_claims
+from xainarratives.guardrails.types import GuardrailResult, NarrativeExtraction
 from xainarratives.prompts.base import PromptTemplate
 from xainarratives.providers.base import LLMProvider
 from xainarratives.schema import DatasetSchema
-from xainarratives.types import ExplanationMode, ExplanationRequest, ExplanationResult
+from xainarratives.types import (
+    ExplanationMode,
+    ExplanationRequest,
+    ExplanationResult,
+    TabularExplanationRequest,
+)
 
 
 class Explainer:
@@ -31,11 +38,13 @@ class Explainer:
         llm: LLMProvider,
         prompt_template: PromptTemplate,
         config: ExplanationConfig | None = None,
+        judge_llm: LLMProvider | None = None,
     ) -> None:
         self.schema = schema
         self.llm = llm
         self.prompt_template = prompt_template
         self.config = config or ExplanationConfig()
+        self.judge_llm = judge_llm if judge_llm is not None else self.llm
 
     def explain(self, request: ExplanationRequest) -> ExplanationResult:
         self._validate_modality(request)
@@ -48,6 +57,22 @@ class Explainer:
         response = self.llm.generate(system, user)
         latency_ms = (time.perf_counter() - start) * 1000.0
 
+        guardrails: list[GuardrailResult] | None = None
+        narrative_extraction: NarrativeExtraction | None = None
+        guardrail_tokens_used: dict[str, int] | None = None
+
+        if self.config.run_guardrails:
+            guardrails = [class_name_mentioned(response.text, self.schema, request.prediction)]
+            if self.config.extract_narrative and isinstance(request, TabularExplanationRequest):
+                extraction, judge_response, failure = extract_narrative_claims(
+                    response.text, request, self.schema, self.judge_llm
+                )
+                guardrail_tokens_used = judge_response.tokens_used
+                if extraction is not None:
+                    narrative_extraction = extraction
+                if failure is not None:
+                    guardrails.append(failure)
+
         return ExplanationResult(
             text=response.text,
             mode=mode,
@@ -56,6 +81,9 @@ class Explainer:
             model_name=response.model_name,
             tokens_used=response.tokens_used,
             latency_ms=latency_ms,
+            guardrails=guardrails,
+            narrative_extraction=narrative_extraction,
+            guardrail_tokens_used=guardrail_tokens_used,
         )
 
     # ------------------------------------------------------------------ #
