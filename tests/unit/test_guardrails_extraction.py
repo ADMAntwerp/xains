@@ -1,30 +1,27 @@
-"""Unit tests for extract_narrative_claims.
+"""Unit tests for extract_narrative_claims (prompt v2: resolution-at-extraction).
 
-Extraction is a single LLM call that produces a structured JSON claim per
-feature the narrative mentions. These tests script MockLLMProvider to return
-known JSON shapes and assert the parsing / validation / failure behaviour.
-No real LLM is called.
+The LLM resolves narrative mentions to schema feature names at extraction
+time. ``NarrativeExtraction.features`` is keyed by schema name; unresolved
+mentions go into ``NarrativeExtraction.hallucinations``. See ADR 0007.
 """
 
 import json
 
 import pytest
+from pydantic import ValidationError
 
 from xainarratives import (
     DatasetSchema,
+    FeatureClaim,
     FeatureSchema,
     Modality,
+    NarrativeExtraction,
     Prediction,
     TabularContribution,
     TabularExplanationRequest,
     TargetSchema,
 )
-from xainarratives.guardrails import (
-    FeatureClaim,
-    GuardrailResult,
-    NarrativeExtraction,
-    extract_narrative_claims,
-)
+from xainarratives.guardrails import GuardrailResult, extract_narrative_claims
 from xainarratives.providers import MockLLMProvider
 
 # ------------------------------------------------------ fixtures
@@ -69,14 +66,17 @@ def _ok_payload() -> str:
                     "sign": 1,
                     "value": 0.41,
                     "assumption": "pushes toward default",
+                    "narrative_name": "dti",
                 },
                 "age": {
                     "rank": 2,
                     "sign": -1,
                     "value": 29,
                     "assumption": "younger, mildly offsets",
+                    "narrative_name": "age",
                 },
-            }
+            },
+            "hallucinations": [],
         }
     )
 
@@ -95,10 +95,10 @@ def test_extraction_parses_well_formed_json(
     assert failure is None
     assert response.text == _ok_payload()
     assert set(extraction.features.keys()) == {"dti", "age"}
-    assert all(isinstance(c, FeatureClaim) for c in extraction.features.values())
+    assert extraction.hallucinations == []
 
 
-def test_extraction_records_prompt_version(
+def test_extraction_records_prompt_version_2(
     schema: DatasetSchema, request_obj: TabularExplanationRequest
 ) -> None:
     llm = MockLLMProvider(responses=[_ok_payload()], model_name="mock-judge")
@@ -106,7 +106,7 @@ def test_extraction_records_prompt_version(
         text="x", request=request_obj, schema=schema, judge_llm=llm
     )
     assert extraction is not None
-    assert extraction.prompt_version == "1"
+    assert extraction.prompt_version == "2"
 
 
 def test_extraction_records_model_name_from_response(
@@ -120,23 +120,29 @@ def test_extraction_records_model_name_from_response(
     assert extraction.model_name == "judge-xyz"
 
 
-# ----------------------------------------- narrative-name preservation
+# ----------------------------------------- resolution + hallucinations
 
 
-def test_extraction_preserves_narrative_feature_name_keys(
+def test_extraction_resolved_features_keyed_by_schema_name(
     schema: DatasetSchema, request_obj: TabularExplanationRequest
 ) -> None:
-    """Narrative uses synonym 'debt-to-income'; key must NOT be normalized to 'dti'."""
+    """Narrative says 'debt-to-income'; LLM resolves to schema name 'dti'.
+
+    The features dict is keyed by 'dti'. The original mention is preserved
+    in claim.narrative_name; claim.resolved_to equals the schema key.
+    """
     payload = json.dumps(
         {
             "features": {
-                "debt-to-income": {
+                "dti": {
                     "rank": 1,
                     "sign": 1,
                     "value": 0.41,
                     "assumption": "pushes toward default",
+                    "narrative_name": "debt-to-income",
                 }
-            }
+            },
+            "hallucinations": [],
         }
     )
     llm = MockLLMProvider(responses=[payload], model_name="mock-judge")
@@ -144,18 +150,111 @@ def test_extraction_preserves_narrative_feature_name_keys(
         text="x", request=request_obj, schema=schema, judge_llm=llm
     )
     assert extraction is not None
-    assert "debt-to-income" in extraction.features
-    assert "dti" not in extraction.features
+    assert "dti" in extraction.features
+    assert "debt-to-income" not in extraction.features
+    claim = extraction.features["dti"]
+    assert claim.narrative_name == "debt-to-income"
+    assert claim.resolved_to == "dti"
 
 
-# ----------------------------------------- value polymorphism
+def test_extraction_hallucinations_recorded_separately(
+    schema: DatasetSchema, request_obj: TabularExplanationRequest
+) -> None:
+    """Unresolved mentions go into hallucinations with resolved_to=None."""
+    payload = json.dumps(
+        {
+            "features": {
+                "dti": {
+                    "rank": 1,
+                    "sign": 1,
+                    "value": 0.41,
+                    "assumption": "drives default",
+                    "narrative_name": "dti",
+                }
+            },
+            "hallucinations": [
+                {
+                    "rank": 2,
+                    "sign": -1,
+                    "value": None,
+                    "assumption": "stabilizing factor",
+                    "narrative_name": "borrowing_pressure",
+                }
+            ],
+        }
+    )
+    llm = MockLLMProvider(responses=[payload], model_name="mock-judge")
+    extraction, _, _ = extract_narrative_claims(
+        text="x", request=request_obj, schema=schema, judge_llm=llm
+    )
+    assert extraction is not None
+    assert len(extraction.hallucinations) == 1
+    halluc = extraction.hallucinations[0]
+    assert halluc.narrative_name == "borrowing_pressure"
+    assert halluc.resolved_to is None
+    assert halluc.rank == 2
+
+
+def test_extraction_rejects_non_schema_feature_key_in_features_dict(
+    schema: DatasetSchema, request_obj: TabularExplanationRequest
+) -> None:
+    """features keys must be in schema.features. Non-schema names → failure."""
+    payload = json.dumps(
+        {
+            "features": {
+                "bogus": {
+                    "rank": 1,
+                    "sign": 1,
+                    "value": None,
+                    "assumption": "made up",
+                    "narrative_name": "bogus",
+                }
+            },
+            "hallucinations": [],
+        }
+    )
+    llm = MockLLMProvider(responses=[payload], model_name="mock-judge")
+    extraction, _, failure = extract_narrative_claims(
+        text="x", request=request_obj, schema=schema, judge_llm=llm
+    )
+    assert extraction is None
+    assert failure is not None
+    assert failure.severity == "advisory"
+    assert failure.passed is False
+
+
+def test_extraction_rejects_resolved_to_mismatch_with_key() -> None:
+    """NarrativeExtraction validator: features[name].resolved_to must equal name."""
+    with pytest.raises(ValidationError):
+        NarrativeExtraction(
+            features={
+                "dti": FeatureClaim(rank=1, sign=1, narrative_name="debt", resolved_to="age"),
+            },
+            hallucinations=[],
+            prompt_version="2",
+            model_name="x",
+        )
+
+
+# ----------------------------------------- value polymorphism (preserved)
 
 
 def test_extraction_accepts_string_value(
     schema: DatasetSchema, request_obj: TabularExplanationRequest
 ) -> None:
     payload = json.dumps(
-        {"features": {"dti": {"rank": 1, "sign": 1, "value": "high", "assumption": "elevated"}}}
+        {
+            "features": {
+                "dti": {
+                    "rank": 1,
+                    "sign": 1,
+                    "value": "high",
+                    "assumption": "elevated",
+                    "narrative_name": "dti",
+                }
+            },
+            "hallucinations": [],
+        }
     )
     llm = MockLLMProvider(responses=[payload], model_name="mock-judge")
     extraction, _, _ = extract_narrative_claims(
@@ -169,7 +268,18 @@ def test_extraction_accepts_null_value(
     schema: DatasetSchema, request_obj: TabularExplanationRequest
 ) -> None:
     payload = json.dumps(
-        {"features": {"dti": {"rank": 1, "sign": 1, "value": None, "assumption": "unnamed value"}}}
+        {
+            "features": {
+                "dti": {
+                    "rank": 1,
+                    "sign": 1,
+                    "value": None,
+                    "assumption": "unnamed value",
+                    "narrative_name": "dti",
+                }
+            },
+            "hallucinations": [],
+        }
     )
     llm = MockLLMProvider(responses=[payload], model_name="mock-judge")
     extraction, _, _ = extract_narrative_claims(
@@ -185,8 +295,15 @@ def test_extraction_accepts_sign_zero(
     payload = json.dumps(
         {
             "features": {
-                "dti": {"rank": 1, "sign": 0, "value": 0.41, "assumption": "mentioned neutrally"}
-            }
+                "dti": {
+                    "rank": 1,
+                    "sign": 0,
+                    "value": 0.41,
+                    "assumption": "mentioned neutrally",
+                    "narrative_name": "dti",
+                }
+            },
+            "hallucinations": [],
         }
     )
     llm = MockLLMProvider(responses=[payload], model_name="mock-judge")
@@ -204,7 +321,18 @@ def test_extraction_rejects_sign_outside_minus_one_zero_plus_one(
     schema: DatasetSchema, request_obj: TabularExplanationRequest
 ) -> None:
     payload = json.dumps(
-        {"features": {"dti": {"rank": 1, "sign": 2, "value": 0.41, "assumption": ""}}}
+        {
+            "features": {
+                "dti": {
+                    "rank": 1,
+                    "sign": 2,
+                    "value": 0.41,
+                    "assumption": "",
+                    "narrative_name": "dti",
+                }
+            },
+            "hallucinations": [],
+        }
     )
     llm = MockLLMProvider(responses=[payload], model_name="mock-judge")
     extraction, _, failure = extract_narrative_claims(
@@ -220,7 +348,18 @@ def test_extraction_rejects_rank_less_than_one(
     schema: DatasetSchema, request_obj: TabularExplanationRequest
 ) -> None:
     payload = json.dumps(
-        {"features": {"dti": {"rank": 0, "sign": 1, "value": 0.41, "assumption": ""}}}
+        {
+            "features": {
+                "dti": {
+                    "rank": 0,
+                    "sign": 1,
+                    "value": 0.41,
+                    "assumption": "",
+                    "narrative_name": "dti",
+                }
+            },
+            "hallucinations": [],
+        }
     )
     llm = MockLLMProvider(responses=[payload], model_name="mock-judge")
     extraction, _, failure = extract_narrative_claims(
@@ -230,36 +369,64 @@ def test_extraction_rejects_rank_less_than_one(
     assert failure is not None
 
 
-def test_extraction_rejects_rank_not_permutation_of_1_to_n(
+def test_extraction_rejects_rank_not_permutation_of_1_to_n_over_union(
     schema: DatasetSchema, request_obj: TabularExplanationRequest
 ) -> None:
-    """Ranks must be a dense 1..N permutation. Covers duplicates AND gaps."""
-    # Case A: duplicate ranks {1, 1}
-    payload_dup = json.dumps(
+    """Ranks across features and hallucinations must form a 1..N dense permutation."""
+    # Gapped ranks: features {dti:rank=1} + hallucinations [{rank=3}] → [1, 3]
+    payload_gap = json.dumps(
         {
             "features": {
-                "dti": {"rank": 1, "sign": 1, "value": 0.41, "assumption": ""},
-                "age": {"rank": 1, "sign": -1, "value": 29, "assumption": ""},
-            }
+                "dti": {
+                    "rank": 1,
+                    "sign": 1,
+                    "value": 0.41,
+                    "assumption": "",
+                    "narrative_name": "dti",
+                }
+            },
+            "hallucinations": [
+                {
+                    "rank": 3,
+                    "sign": -1,
+                    "value": None,
+                    "assumption": "",
+                    "narrative_name": "ghost",
+                }
+            ],
         }
     )
-    llm = MockLLMProvider(responses=[payload_dup], model_name="mock-judge")
+    llm = MockLLMProvider(responses=[payload_gap], model_name="mock-judge")
     extraction, _, failure = extract_narrative_claims(
         text="x", request=request_obj, schema=schema, judge_llm=llm
     )
     assert extraction is None
     assert failure is not None
 
-    # Case B: gapped ranks {1, 42}
-    payload_gap = json.dumps(
+    # Duplicate ranks: features {dti:rank=1} + hallucinations [{rank=1}]
+    payload_dup = json.dumps(
         {
             "features": {
-                "dti": {"rank": 1, "sign": 1, "value": 0.41, "assumption": ""},
-                "age": {"rank": 42, "sign": -1, "value": 29, "assumption": ""},
-            }
+                "dti": {
+                    "rank": 1,
+                    "sign": 1,
+                    "value": 0.41,
+                    "assumption": "",
+                    "narrative_name": "dti",
+                }
+            },
+            "hallucinations": [
+                {
+                    "rank": 1,
+                    "sign": -1,
+                    "value": None,
+                    "assumption": "",
+                    "narrative_name": "ghost",
+                }
+            ],
         }
     )
-    llm = MockLLMProvider(responses=[payload_gap], model_name="mock-judge")
+    llm = MockLLMProvider(responses=[payload_dup], model_name="mock-judge")
     extraction, _, failure = extract_narrative_claims(
         text="x", request=request_obj, schema=schema, judge_llm=llm
     )
@@ -299,17 +466,16 @@ def test_extraction_malformed_json_returns_none_and_failure_result(
     assert failure.severity == "advisory"
     assert failure.passed is False
     assert failure.details["reason"] == "could_not_parse_extraction_output"
-    assert failure.details["prompt_version"] == "1"
+    assert failure.details["prompt_version"] == "2"
     assert failure.details["model_name"] == "mock-judge"
     assert "raw" in failure.details
-    # Response still available so caller can account for tokens spent.
     assert response.text == "this is not json at all"
 
 
 def test_extraction_schema_violation_returns_none_and_failure_result(
     schema: DatasetSchema, request_obj: TabularExplanationRequest
 ) -> None:
-    """Valid JSON, wrong shape: missing 'features' top-level key."""
+    """Valid JSON, wrong shape: missing top-level 'features' key."""
     payload = json.dumps({"not_features": {}})
     llm = MockLLMProvider(responses=[payload], model_name="mock-judge")
     extraction, _, failure = extract_narrative_claims(
@@ -322,26 +488,70 @@ def test_extraction_schema_violation_returns_none_and_failure_result(
     assert failure.details["model_name"] == "mock-judge"
 
 
-# ----------------------------------------- empty / minimal cases
+# ----------------------------------------- empty / minimal
 
 
-def test_extraction_empty_features_dict_is_valid(
+def test_extraction_empty_features_and_empty_hallucinations_is_valid(
     schema: DatasetSchema, request_obj: TabularExplanationRequest
 ) -> None:
-    """A narrative that names no features is valid — empty dict, no error."""
-    payload = json.dumps({"features": {}})
+    """A narrative that names no features at all is valid."""
+    payload = json.dumps({"features": {}, "hallucinations": []})
     llm = MockLLMProvider(responses=[payload], model_name="mock-judge")
     extraction, _, failure = extract_narrative_claims(
         text="x", request=request_obj, schema=schema, judge_llm=llm
     )
     assert extraction is not None
     assert extraction.features == {}
+    assert extraction.hallucinations == []
     assert failure is None
 
 
+# ----------------------------------------- FeatureClaim direct
+
+
 def test_feature_claim_valid_model() -> None:
-    c = FeatureClaim(rank=1, sign=1, value=0.41, assumption="drives decision")
+    c = FeatureClaim(
+        rank=1,
+        sign=1,
+        value=0.41,
+        assumption="drives decision",
+        narrative_name="debt-to-income",
+        resolved_to="dti",
+    )
     assert c.rank == 1
     assert c.sign == 1
-    assert c.value == 0.41
-    assert c.assumption == "drives decision"
+    assert c.narrative_name == "debt-to-income"
+    assert c.resolved_to == "dti"
+
+
+def test_feature_claim_resolved_to_none_implies_hallucination_role() -> None:
+    """``resolved_to=None`` is a valid FeatureClaim shape (used for hallucinations).
+
+    NarrativeExtraction enforces:
+      * a claim in ``features`` dict has ``resolved_to == key``,
+      * a claim in ``hallucinations`` has ``resolved_to is None``.
+    """
+    halluc_shape = FeatureClaim(rank=1, sign=1, narrative_name="ghost", resolved_to=None)
+    assert halluc_shape.resolved_to is None
+
+    # Hallucination entry with resolved_to set → rejected.
+    with pytest.raises(ValidationError):
+        NarrativeExtraction(
+            features={},
+            hallucinations=[
+                FeatureClaim(rank=1, sign=1, narrative_name="x", resolved_to="dti"),
+            ],
+            prompt_version="2",
+            model_name="x",
+        )
+
+    # Resolved feature with resolved_to=None → rejected.
+    with pytest.raises(ValidationError):
+        NarrativeExtraction(
+            features={
+                "dti": FeatureClaim(rank=1, sign=1, narrative_name="dti", resolved_to=None),
+            },
+            hallucinations=[],
+            prompt_version="2",
+            model_name="x",
+        )

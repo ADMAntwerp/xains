@@ -37,9 +37,13 @@ dev = [
     "anthropic>=0.96,<1.0",
     "vcrpy>=8.1,<9",
     "pytest-recording>=0.13,<0.14",
+    "textstat>=0.7,<1",
 ]
 anthropic = [
     "anthropic>=0.96,<1.0",
+]
+textstat = [
+    "textstat>=0.7,<1",
 ]
 
 [project.urls]
@@ -95,6 +99,10 @@ disallow_untyped_defs = false
 
 [[tool.mypy.overrides]]
 module = ["anthropic", "anthropic.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["textstat", "textstat.*"]
 ignore_missing_imports = true
 # ---------- Pytest ----------
 [tool.pytest.ini_options]

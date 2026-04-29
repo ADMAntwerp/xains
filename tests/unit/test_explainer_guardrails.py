@@ -51,8 +51,10 @@ def _valid_extraction_json() -> str:
                     "sign": 1,
                     "value": 0.41,
                     "assumption": "drives default",
+                    "narrative_name": "dti",
                 }
-            }
+            },
+            "hallucinations": [],
         }
     )
 

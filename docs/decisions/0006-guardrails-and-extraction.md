@@ -1,7 +1,7 @@
 # 0006. Guardrails and narrative extraction layer
 
 Date: 2026-04-27
-Status: Accepted
+Status: Accepted; superseded in part by 0007 (resolution-at-extraction)
 
 ## Context
 
@@ -118,6 +118,14 @@ contracts.
   prompt.** Rejected because explanations are already capped at
   `config.max_length_words`. Adding a second length budget creates
   surprises when the first one is hit.
+
+## Revised by 0007
+
+The statement that "set-membership normalization is the job of the
+downstream scoring layer" was reversed by ADR 0007 — feature-name
+resolution now happens at extraction time, not at scoring time. The rest
+of this ADR (rule-based check, two-tier architecture, paper-verbatim
+field names, prompt versioning) remains in force.
 
 ## References
 

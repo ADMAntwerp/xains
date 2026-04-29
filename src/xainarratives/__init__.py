@@ -8,6 +8,19 @@ for the architectural overview.
 from xainarratives.config import ExplanationConfig
 from xainarratives.explainer import Explainer
 from xainarratives.guardrails import FeatureClaim, GuardrailResult, NarrativeExtraction
+from xainarratives.metrics import (
+    APIPerplexityProvider,
+    DisabledProvider,
+    ExtractionScores,
+    PerplexityProvider,
+    coverage,
+    hallucination_count,
+    rank_correlation,
+    readability,
+    score_extraction,
+    sign_faithfulness,
+    value_faithfulness,
+)
 from xainarratives.schema import (
     DatasetSchema,
     FeatureSchema,
@@ -40,13 +53,16 @@ from xainarratives.types import (
 __version__ = "0.0.1"
 
 __all__ = [
+    "APIPerplexityProvider",
     "DatasetSchema",
+    "DisabledProvider",
     "EdgeContribution",
     "Explainer",
     "ExplanationConfig",
     "ExplanationMode",
     "ExplanationRequest",
     "ExplanationResult",
+    "ExtractionScores",
     "FeatureClaim",
     "FeatureSchema",
     "GraphCounterfactual",
@@ -59,6 +75,7 @@ __all__ = [
     "Modality",
     "NarrativeExtraction",
     "NodeContribution",
+    "PerplexityProvider",
     "Prediction",
     "RegionContribution",
     "TabularContribution",
@@ -70,4 +87,11 @@ __all__ = [
     "TextSpec",
     "TokenContribution",
     "__version__",
+    "coverage",
+    "hallucination_count",
+    "rank_correlation",
+    "readability",
+    "score_extraction",
+    "sign_faithfulness",
+    "value_faithfulness",
 ]
