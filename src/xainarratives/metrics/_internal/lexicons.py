@@ -21,18 +21,18 @@ def _load(filename: str) -> frozenset[str]:
 def load_connectives() -> frozenset[str]:
     """Return the 142-entry connectives lexicon (Das et al. 2018)."""
     entries = _load("connectives.json")
-    assert (
-        len(entries) == 142
-    ), f"connectives lexicon corrupt: expected 142 entries, got {len(entries)}"
+    assert len(entries) == 142, (
+        f"connectives lexicon corrupt: expected 142 entries, got {len(entries)}"
+    )
     return entries
 
 
 def load_cause_effect_markers() -> frozenset[str]:
     """Return the 19-entry cause-effect marker lexicon (Cedro & Martens 2026)."""
     entries = _load("cause_effect_markers.json")
-    assert (
-        len(entries) == 19
-    ), f"cause-effect lexicon corrupt: expected 19 entries, got {len(entries)}"
+    assert len(entries) == 19, (
+        f"cause-effect lexicon corrupt: expected 19 entries, got {len(entries)}"
+    )
     return entries
 
 
