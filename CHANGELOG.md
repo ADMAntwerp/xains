@@ -33,6 +33,29 @@ While `0.y.z`, minor versions may contain breaking changes.
 - `textstat` as an optional dependency
   (`pip install "xainarratives[textstat]"`) for the readability metric.
 - ADR 0007: resolution at extraction time.
+- Seven paper narrativity metrics from Cedro & Martens 2026
+  (arXiv:2604.18311): `csr`, `dcpr`, `ccpr`, `cecpr`, `fdr`, `ttcpr`,
+  `vcpr`. All pure `(text, provider) -> float | None`; degrade to
+  `None` on degenerate inputs.
+- `NarrativityScores` model + `score_narrativity(text, provider)`
+  orchestrator. Captures the 7 derived metrics plus 9 auxiliary
+  primitives (`ppl_ordered`, `ppl_shuffled`, `decay_constant`,
+  `dist2`, `ttr`, `vr`, `cr`, `cer`, `n_sentences`) for paper
+  replication.
+- `xainarratives.metrics._internal/` private subpackage:
+  `tokenize` (NLTK sentence/POS, regex word tokenizer), `curve_fit`
+  (scipy exponential decay fitter), `lexicons` (vendored JSON loaders
+  + greedy phrase counter), `perplexity_utils` (cumulative perplexity
+  over sentence prefixes).
+- Vendored lexicons under
+  `src/xainarratives/metrics/_internal/data/`: 142-entry connectives
+  (Das et al. 2018, ACL W18-5042) and 19-entry cause-effect markers
+  (paper Appendix A). Loaders assert expected counts at load time.
+- `narrativity` optional dependency
+  (`pip install "xainarratives[narrativity]"`) bundling
+  `nltk>=3.9,<4` and `scipy>=1.13,<2`.
+- ADR 0008: narrativity metrics — paper-faithful composition over
+  Protocol changes.
 
 ### Changed
 

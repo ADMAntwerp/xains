@@ -11,7 +11,18 @@ from xainarratives.metrics.fidelity import (
     sign_faithfulness,
     value_faithfulness,
 )
-from xainarratives.metrics.narrativity import readability
+from xainarratives.metrics.narrativity import (
+    NarrativityScores,
+    ccpr,
+    cecpr,
+    csr,
+    dcpr,
+    fdr,
+    readability,
+    score_narrativity,
+    ttcpr,
+    vcpr,
+)
 from xainarratives.metrics.perplexity import (
     APIPerplexityProvider,
     DisabledProvider,
@@ -23,12 +34,21 @@ __all__ = [
     "APIPerplexityProvider",
     "DisabledProvider",
     "ExtractionScores",
+    "NarrativityScores",
     "PerplexityProvider",
+    "ccpr",
+    "cecpr",
     "coverage",
+    "csr",
+    "dcpr",
+    "fdr",
     "hallucination_count",
     "rank_correlation",
     "readability",
     "score_extraction",
+    "score_narrativity",
     "sign_faithfulness",
+    "ttcpr",
     "value_faithfulness",
+    "vcpr",
 ]

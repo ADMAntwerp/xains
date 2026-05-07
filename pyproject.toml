@@ -38,12 +38,18 @@ dev = [
     "vcrpy>=8.1,<9",
     "pytest-recording>=0.13,<0.14",
     "textstat>=0.7,<1",
+    "nltk>=3.9,<4",
+    "scipy>=1.13,<2",
 ]
 anthropic = [
     "anthropic>=0.96,<1.0",
 ]
 textstat = [
     "textstat>=0.7,<1",
+]
+narrativity = [
+    "nltk>=3.9,<4",
+    "scipy>=1.13,<2",
 ]
 
 [project.urls]
@@ -103,6 +109,18 @@ ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = ["textstat", "textstat.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["nltk", "nltk.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["scipy", "scipy.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["numpy", "numpy.*"]
 ignore_missing_imports = true
 # ---------- Pytest ----------
 [tool.pytest.ini_options]
