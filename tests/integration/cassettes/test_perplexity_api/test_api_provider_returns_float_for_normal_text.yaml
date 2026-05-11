@@ -1,0 +1,108 @@
+interactions:
+- request:
+    body: '{"model":"meta-llama/Meta-Llama-3-8B-Instruct-Lite","prompt":"The applicant
+      defaulted within the window.","echo":true,"logprobs":1,"max_tokens":1,"temperature":0}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '162'
+      Content-Type:
+      - application/json
+      Host:
+      - api.together.xyz
+      User-Agent:
+      - OpenAI/Python 1.109.1
+      X-Stainless-Arch:
+      - x64
+      X-Stainless-Async:
+      - 'false'
+      X-Stainless-Lang:
+      - python
+      X-Stainless-OS:
+      - Linux
+      X-Stainless-Package-Version:
+      - 1.109.1
+      X-Stainless-Runtime:
+      - CPython
+      X-Stainless-Runtime-Version:
+      - 3.12.3
+      x-stainless-read-timeout:
+      - '30.0'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://api.together.xyz/v1/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/51UTY+bMBC951dYnIPrL4y9x+2p0m5PvVTVKnLABHcdQMEoK0X732tDwtc2lbYc
+        kOfNzJvn8diXDQCRyaMHENUmPx+eu5j9/P51z2JZyCJXhMhMFAlHebQNofX+t85cCHf6zcGsPjZW
+        O1NXgzs7aeV0oMNpKpgQCeO941jn2oa0o3YqtlYd1ZfnsHwKy5jG4jH+VrXu1GUufjJOD3zNyRcI
+        5X55C4BL/wdD8cD2o9RANY01maocyHWhOuvrg7NxpamA8+6zqfL6DHu+PtfWB0+7b33+jS8w1q+6
+        2pm8HYsNXyrxdmZSQrmYA5IhIecAkWxppwuTUrIgxHQ0XrYrOWstYbvRPDmaNr/Cx1as8KExK9B9
+        oB2atgRhdF/pbtbUueKqs3ZOEmMCCUFcLkEMJZWEo2QJI0gJ40m6QBEUFEtJEVvAKcScpgnhC5RC
+        jJEgyaT8unrf3P4vw+CWtcl0e3/SwLz3UWEq05Y7P+2tH33vtro6uHIKaHV/CxjlLAjAVJCUYc4R
+        GkN8i/Wbj0H/OZlJKj4xOr3+zx9gjGFCE5xwcie3uZd5ma1v9R/+xnc7jH8dT9eqgx7bcn0WduNO
+        rxMSTc/R5LveNi/VKTvB4paislLnE442oe77H4FrGn4YBQAA
+    headers:
+      Access-Control-Allow-Origin:
+      - '*'
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-Ray:
+      - 9f9fda229c8f560d-BRU
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Mon, 11 May 2026 08:35:47 GMT
+      ETag:
+      - W/"518-V0zSuwyNbR60iUnhKSFJ2/5JMtU"
+      Retry-After:
+      - '2'
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=15552000; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - accept-encoding
+      alt-svc:
+      - h3=":443"; ma=86400
+      x-amzn-trace-id:
+      - 230cad8e-9ec9-4773-b088-23eb5a2ca4a6-noamzn
+      x-api-call-end:
+      - '2026-05-11T08:35:47.215Z'
+      x-api-call-start:
+      - '2026-05-11T08:35:47.082Z'
+      x-api-received:
+      - '2026-05-11T08:35:46.825Z'
+      x-inference-version:
+      - v2
+      x-ratelimit:
+      - 'false'
+      x-ratelimit-limit:
+      - '100'
+      x-ratelimit-limit-tokens:
+      - '33333'
+      x-ratelimit-remaining:
+      - '199'
+      x-ratelimit-remaining-tokens:
+      - '33333'
+      x-ratelimit-reset:
+      - '2'
+      x-request-id:
+      - oidwgMu-4YNCb4-9f9fda229c8f560d
+    status:
+      code: 200
+      message: OK
+version: 1

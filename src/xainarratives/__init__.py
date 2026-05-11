@@ -9,10 +9,11 @@ from xainarratives.config import ExplanationConfig
 from xainarratives.explainer import Explainer
 from xainarratives.guardrails import FeatureClaim, GuardrailResult, NarrativeExtraction
 from xainarratives.metrics import (
-    APIPerplexityProvider,
     DisabledProvider,
     ExtractionScores,
+    HuggingFacePerplexityProvider,
     NarrativityScores,
+    OpenAICompatibleEchoProvider,
     PerplexityProvider,
     ccpr,
     cecpr,
@@ -62,7 +63,6 @@ from xainarratives.types import (
 __version__ = "0.0.1"
 
 __all__ = [
-    "APIPerplexityProvider",
     "DatasetSchema",
     "DisabledProvider",
     "EdgeContribution",
@@ -78,6 +78,7 @@ __all__ = [
     "GraphExplanationRequest",
     "GraphSpec",
     "GuardrailResult",
+    "HuggingFacePerplexityProvider",
     "ImageCounterfactual",
     "ImageExplanationRequest",
     "ImageSpec",
@@ -85,6 +86,7 @@ __all__ = [
     "NarrativeExtraction",
     "NarrativityScores",
     "NodeContribution",
+    "OpenAICompatibleEchoProvider",
     "PerplexityProvider",
     "Prediction",
     "RegionContribution",

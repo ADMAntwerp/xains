@@ -40,6 +40,9 @@ dev = [
     "textstat>=0.7,<1",
     "nltk>=3.9,<4",
     "scipy>=1.13,<2",
+    "transformers>=4.40,<5",
+    "torch>=2.0,<3",
+    "openai>=1.30,<2",
 ]
 anthropic = [
     "anthropic>=0.96,<1.0",
@@ -50,6 +53,13 @@ textstat = [
 narrativity = [
     "nltk>=3.9,<4",
     "scipy>=1.13,<2",
+]
+perplexity-hf = [
+    "transformers>=4.40,<5",
+    "torch>=2.0,<3",
+]
+perplexity-api = [
+    "openai>=1.30,<2",
 ]
 
 [project.urls]
@@ -121,6 +131,18 @@ ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = ["numpy", "numpy.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["transformers", "transformers.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["torch", "torch.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["openai", "openai.*"]
 ignore_missing_imports = true
 # ---------- Pytest ----------
 [tool.pytest.ini_options]

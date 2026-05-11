@@ -2,17 +2,19 @@
 
 Perplexity is the one metric in this package that needs an external
 language model. It is gated through the ``PerplexityProvider`` Protocol so
-the metric layer never depends on a specific LLM SDK. Two concrete
-implementations ship in v0:
+the metric layer never depends on a specific LLM SDK.
 
-* ``DisabledProvider`` — always returns ``None`` (default; no perplexity).
-* ``APIPerplexityProvider`` — wraps a caller-supplied callable that returns
-  a perplexity value. The callable is expected to compute perplexity from
-  whatever the caller's LLM exposes (token logprobs, native perplexity
-  endpoint, etc.); the provider does not care.
+Concrete providers shipped:
+
+* ``DisabledProvider`` (this module) — always returns ``None`` (default;
+  no perplexity computed).
+* ``HuggingFacePerplexityProvider`` (``perplexity_hf``) — local
+  autoregressive model via transformers + torch.
+* ``OpenAICompatibleEchoProvider`` (``perplexity_api``) — hits any
+  ``/v1/completions`` endpoint with ``echo=True, logprobs=1`` (Together,
+  vLLM, TGI's OpenAI shim, OpenAI legacy completions).
 """
 
-from collections.abc import Callable
 from typing import Protocol, runtime_checkable
 
 
@@ -30,13 +32,3 @@ class DisabledProvider:
 
     def compute(self, text: str) -> float | None:
         return None
-
-
-class APIPerplexityProvider:
-    """Wraps a caller-supplied perplexity callable into the Protocol."""
-
-    def __init__(self, perplexity_fn: Callable[[str], float | None]) -> None:
-        self._fn = perplexity_fn
-
-    def compute(self, text: str) -> float | None:
-        return self._fn(text)

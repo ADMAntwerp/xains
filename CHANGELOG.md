@@ -56,6 +56,25 @@ While `0.y.z`, minor versions may contain breaking changes.
   `nltk>=3.9,<4` and `scipy>=1.13,<2`.
 - ADR 0008: narrativity metrics — paper-faithful composition over
   Protocol changes.
+- `HuggingFacePerplexityProvider` — local autoregressive perplexity via
+  `transformers` + `torch`. Eager-loads model + tokenizer in `__init__`,
+  auto-detects CUDA, truncates oversize inputs with one `UserWarning` per
+  provider instance. Default `model_name="gpt2"` (~500 MB cached
+  download on first use); paper replication wants
+  `meta-llama/Llama-3.1-8B`.
+- `OpenAICompatibleEchoProvider` — hits any OpenAI-compatible
+  `/v1/completions` endpoint with `echo=True, logprobs=1, max_tokens=1`
+  (Together.ai, vLLM, TGI's OpenAI shim, OpenAI's legacy completions).
+  Dual-shape response parser handles both `choices[0].logprobs` and
+  `prompt[0].logprobs`. Catches `openai.OpenAIError` and returns `None`
+  per Protocol contract.
+- `perplexity-hf` optional dependency
+  (`pip install "xainarratives[perplexity-hf]"`) bundling
+  `transformers>=4.40,<5` and `torch>=2.0,<3`.
+- `perplexity-api` optional dependency
+  (`pip install "xainarratives[perplexity-api]"`) bundling
+  `openai>=1.30,<2`.
+- ADR 0009: perplexity providers — two concretes, no shared base.
 
 ### Changed
 
@@ -78,6 +97,10 @@ While `0.y.z`, minor versions may contain breaking changes.
 
 - Support for prompt-version `"1"` extractions. Hard cutover; pre-1.0
   project, no external users, no compatibility shim.
+- `APIPerplexityProvider` (abstract callable-wrapper placeholder). Zero
+  callers in the codebase, failed the CLAUDE.md "abstractions need ≥2
+  implementations" rule. Replaced by `HuggingFacePerplexityProvider` and
+  `OpenAICompatibleEchoProvider`.
 
 ## [0.0.1] - 2026-04-23
 

@@ -24,17 +24,19 @@ from xainarratives.metrics.narrativity import (
     vcpr,
 )
 from xainarratives.metrics.perplexity import (
-    APIPerplexityProvider,
     DisabledProvider,
     PerplexityProvider,
 )
+from xainarratives.metrics.perplexity_api import OpenAICompatibleEchoProvider
+from xainarratives.metrics.perplexity_hf import HuggingFacePerplexityProvider
 from xainarratives.metrics.scorer import ExtractionScores, score_extraction
 
 __all__ = [
-    "APIPerplexityProvider",
     "DisabledProvider",
     "ExtractionScores",
+    "HuggingFacePerplexityProvider",
     "NarrativityScores",
+    "OpenAICompatibleEchoProvider",
     "PerplexityProvider",
     "ccpr",
     "cecpr",
