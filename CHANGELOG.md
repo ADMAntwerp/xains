@@ -86,6 +86,13 @@ While `0.y.z`, minor versions may contain breaking changes.
   (`pip install "xainarratives[notebook]"`) bundling `jupyter`, `shap`,
   `scikit-learn`, `pandas`.
 - ADR 0010: ship a quickstart Jupyter notebook.
+- Configurable narrative-generation rules: `ExplanationConfig.narrative_rules`
+  (a string field, default `DEFAULT_NARRATIVE_RULES`) is injected into the
+  system prompt by `FactualTabularPromptTemplate`. The default is the
+  four-rule operational definition of an XAI Narrative from Cedro & Martens
+  2026; users override it by passing a custom value. Applies to all
+  narrative-generating templates by convention.
+- ADR 0011: configurable narrative-generation rules.
 
 ### Changed
 

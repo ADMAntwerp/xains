@@ -15,6 +15,16 @@ Tone = Literal["neutral", "empathetic", "formal"]
 ExplanationModeOrAuto = Literal["factual", "contrastive", "counterfactual", "auto"]
 
 
+# Verbatim multi-line paper-quote (Cedro & Martens 2026). The rule sentences exceed
+# the line-length limit on purpose — wrapping would alter the LLM-facing text — so
+# E501 is suppressed for this file via [tool.ruff.lint.per-file-ignores] in pyproject.toml.
+DEFAULT_NARRATIVE_RULES = """Generate a narrative explanation (an XAI Narrative) based on the following rules:
+1. An XAI Narrative should establish a continuous structure by following a clear narrative arc with a beginning, middle, and end, while using explicit linguistic connectives so that individual events can be seen in the perspective of the others.
+2. An XAI Narrative should explicitly identify the underlying cause-effect mechanisms to clarify why the system made a particular prediction.
+3. An XAI Narrative should explain model's prediction with linguistic fluency, avoiding repetitive, list-like structures.
+4. An XAI Narrative should use a lexically diverse vocabulary with an emphasis on active verbs to express how specific features influence the final prediction."""
+
+
 class ExplanationConfig(BaseModel):
     """Knobs governing how the Explainer talks to the LLM."""
 
@@ -38,3 +48,6 @@ class ExplanationConfig(BaseModel):
 
     run_guardrails: bool = True
     extract_narrative: bool = True
+
+    # Injected into the system prompt by every narrative-generating template.
+    narrative_rules: str = DEFAULT_NARRATIVE_RULES

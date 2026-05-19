@@ -4,6 +4,7 @@ import pytest
 from pydantic import ValidationError
 
 from xainarratives import ExplanationConfig
+from xainarratives.config import DEFAULT_NARRATIVE_RULES
 
 
 def test_defaults() -> None:
@@ -34,3 +35,21 @@ def test_mode_choices() -> None:
         ExplanationConfig(mode=m)
     with pytest.raises(ValidationError):
         ExplanationConfig(mode="bogus")
+
+
+def test_narrative_rules_default() -> None:
+    c = ExplanationConfig()
+    assert c.narrative_rules == DEFAULT_NARRATIVE_RULES
+    # Spot-check paper-verbatim content.
+    assert (
+        "Generate a narrative explanation (an XAI Narrative) based on the following rules:"
+    ) in c.narrative_rules
+    for prefix in ("1. ", "2. ", "3. ", "4. "):
+        assert prefix in c.narrative_rules
+
+
+def test_narrative_rules_override() -> None:
+    c = ExplanationConfig(narrative_rules="custom rules block")
+    assert c.narrative_rules == "custom rules block"
+    # Override replaces; it does not append to the default.
+    assert DEFAULT_NARRATIVE_RULES not in c.narrative_rules

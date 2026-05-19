@@ -13,6 +13,7 @@ from xainarratives import (
     TargetSchema,
     TextExplanationRequest,
 )
+from xainarratives.config import DEFAULT_NARRATIVE_RULES
 from xainarratives.prompts import FactualTabularPromptTemplate
 
 
@@ -206,3 +207,24 @@ def test_string_predicted_class_rendered_as_human_label() -> None:
     config = ExplanationConfig()
     _, user = FactualTabularPromptTemplate().render(request, schema, config)
     assert "Alpha" in user
+
+
+def test_system_includes_default_narrative_rules(
+    tabular_schema: DatasetSchema, tabular_request: TabularExplanationRequest
+) -> None:
+    config = ExplanationConfig()
+    system, _ = FactualTabularPromptTemplate().render(tabular_request, tabular_schema, config)
+    # Default rules block appears verbatim in the system message.
+    assert DEFAULT_NARRATIVE_RULES in system
+    # Existing header still present.
+    assert "You are explaining" in system
+
+
+def test_system_includes_custom_narrative_rules(
+    tabular_schema: DatasetSchema, tabular_request: TabularExplanationRequest
+) -> None:
+    config = ExplanationConfig(narrative_rules="CUSTOM_NARRATIVE_RULES")
+    system, _ = FactualTabularPromptTemplate().render(tabular_request, tabular_schema, config)
+    # Custom block replaces (not appends to) the default.
+    assert "CUSTOM_NARRATIVE_RULES" in system
+    assert "An XAI Narrative should establish a continuous structure" not in system

@@ -107,6 +107,7 @@ ignore = []
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["N802"]  # allow snake_case mirrors of CamelCase in tests
+"src/xainarratives/config.py" = ["E501"]  # DEFAULT_NARRATIVE_RULES is a verbatim multi-line paper-quote
 
 [tool.ruff.format]
 quote-style = "double"

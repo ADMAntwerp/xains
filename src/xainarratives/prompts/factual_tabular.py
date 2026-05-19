@@ -49,11 +49,12 @@ class FactualTabularPromptTemplate(PromptTemplate):
                 cut += 1
             ordered = ordered[:cut]
 
-        system = (
+        system_header = (
             f"You are explaining a model prediction for the '{schema.target.name}' target. "
             f"Audience: {config.audience}. Tone: {config.tone}. "
             f"Keep the explanation under {config.max_length_words} words."
         )
+        system = f"{system_header}\n\n{config.narrative_rules}"
 
         lines = [
             f"Prediction: {class_label}.",
