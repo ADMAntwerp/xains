@@ -75,6 +75,17 @@ While `0.y.z`, minor versions may contain breaking changes.
   (`pip install "xainarratives[perplexity-api]"`) bundling
   `openai>=1.30,<2`.
 - ADR 0009: perplexity providers — two concretes, no shared base.
+- Executable quickstart notebook at `notebooks/01_quickstart.ipynb`:
+  end-to-end pipeline on a 30-row OpenML German Credit slice (load,
+  one-hot encode, RF + SHAP, build request, generate + extract, score
+  extraction + narrativity). Outputs committed for GitHub rendering.
+- Vendored `notebooks/data/german_credit_sample.csv` and its
+  deterministic regenerator `scripts/generate_german_credit_sample.py`
+  (seed 42; runs once before the notebook ever executes).
+- `notebook` optional dependency
+  (`pip install "xainarratives[notebook]"`) bundling `jupyter`, `shap`,
+  `scikit-learn`, `pandas`.
+- ADR 0010: ship a quickstart Jupyter notebook.
 
 ### Changed
 

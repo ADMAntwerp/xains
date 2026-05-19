@@ -15,7 +15,20 @@ pip install xainarratives          # core only
 pip install xainarratives[dev]     # dev tooling
 ```
 
-## Quickstart (skeleton / mock path)
+## Quickstart: end-to-end notebook
+
+For the full pipeline (load German Credit, train a RandomForest, compute SHAP, generate a narrative with Claude, extract structured claims, and score extraction fidelity plus the seven Cedro & Martens 2026 narrativity metrics) see notebooks/01_quickstart.ipynb.
+
+Install and launch:
+
+    pip install -e ".[notebook,anthropic,perplexity-api]"
+    export ANTHROPIC_API_KEY="sk-ant-..."
+    export TOGETHER_API_KEY="..."
+    jupyter lab notebooks/01_quickstart.ipynb
+
+The rendered notebook on GitHub shows committed outputs from one realization; LLM responses and perplexity numbers shift run-to-run.
+
+## Minimal example (mock LLM, no API keys)
 
 ```python
 from xainarratives import (
@@ -63,11 +76,17 @@ result = explainer.explain(request)
 print(result.text)
 ```
 
-## What's in v0.0.1
+## Current capabilities
 
-Skeleton + mock path only. No real LLM providers, no real prompt templates, no integrations.
+- Core data model (PR 1): pydantic schema, request, contribution, prediction, and config types across four modalities.
+- AnthropicProvider (PR 2): real Anthropic Claude API integration via the official SDK.
+- from_feature_importance adapter (PR 3): converts any signed per-feature attribution (SHAP, LIME, sklearn feature_importances_) into a TabularExplanationRequest.
+- Guardrails and narrative extraction (PR 4): rule checks plus LLM-based extract_narrative_claims, orchestrated by Explainer.explain.
+- Extraction scoring (PR 5, revised by ADR 0007): sign / value / rank faithfulness, coverage, hallucination count, readability.
+- Paper narrativity metrics (PR 6): the seven Cedro & Martens 2026 metrics (CSR, DCPR, CCPR, CECPR, FDR, TTCPR, VCPR).
+- Perplexity providers (PR 7): HuggingFacePerplexityProvider (local) and OpenAICompatibleEchoProvider (any OpenAI-compatible /v1/completions endpoint).
 
-See [`docs/design.md`](docs/design.md) for the full design and [`docs/decisions/`](docs/decisions/) for recorded architecture decisions.
+See docs/design.md for the full design and docs/decisions/ for recorded architecture decisions (ADRs 0001-0010).
 
 ## License
 

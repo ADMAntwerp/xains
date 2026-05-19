@@ -43,6 +43,10 @@ dev = [
     "transformers>=4.40,<5",
     "torch>=2.0,<3",
     "openai>=1.30,<2",
+    "jupyter>=1.1,<2",
+    "shap>=0.46,<1",
+    "scikit-learn>=1.5,<2",
+    "pandas>=2.2,<3",
 ]
 anthropic = [
     "anthropic>=0.96,<1.0",
@@ -61,6 +65,12 @@ perplexity-hf = [
 perplexity-api = [
     "openai>=1.30,<2",
 ]
+notebook = [
+    "jupyter>=1.1,<2",
+    "shap>=0.46,<1",
+    "scikit-learn>=1.5,<2",
+    "pandas>=2.2,<3",
+]
 
 [project.urls]
 Repository = "https://github.com/xainarratives/xainarratives"
@@ -77,6 +87,7 @@ include = ["src/xainarratives", "README.md", "LICENSE", "CHANGELOG.md"]
 line-length = 100
 target-version = "py311"
 src = ["src", "tests"]
+extend-exclude = ["notebooks"]
 
 [tool.ruff.lint]
 select = [
