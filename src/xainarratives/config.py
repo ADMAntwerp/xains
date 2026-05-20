@@ -10,9 +10,10 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from xainarratives.types import ExplanationMode
+
 Audience = Literal["technical", "business", "end_user"]
 Tone = Literal["neutral", "empathetic", "formal"]
-ExplanationModeOrAuto = Literal["factual", "contrastive", "counterfactual", "auto"]
 
 
 # Verbatim multi-line paper-quote (Cedro & Martens 2026). The rule sentences exceed
@@ -41,10 +42,9 @@ class ExplanationConfig(BaseModel):
     include_confidence: bool = True
     include_caveats: bool = True
 
-    # "auto" resolves to factual / contrastive / counterfactual based on the
-    # request (see Explainer._resolve_mode). Setting an explicit value forces
-    # that mode and is an error if the request doesn't support it.
-    mode: ExplanationModeOrAuto = "auto"
+    # Required: explain the factual prediction, the counterfactual(s), or weave both.
+    # Counterfactual and factual_counterfactual require request.counterfactuals.
+    mode: ExplanationMode
 
     run_guardrails: bool = True
     extract_narrative: bool = True

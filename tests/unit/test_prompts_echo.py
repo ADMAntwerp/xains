@@ -20,7 +20,7 @@ def _render_and_parse(
     | GraphExplanationRequest,
     schema: DatasetSchema,
 ) -> tuple[str, dict[str, object]]:
-    system, user = EchoPromptTemplate().render(request, schema, ExplanationConfig())
+    system, user = EchoPromptTemplate().render(request, schema, ExplanationConfig(mode="factual"))
     payload = json.loads(user)
     return system, payload
 
@@ -32,7 +32,7 @@ def test_tabular_round_trip(
     assert set(payload.keys()) == {"schema", "request", "config"}
     assert payload["request"]["modality"] == "tabular"  # type: ignore[index]
     assert payload["schema"]["modality"] == "tabular"  # type: ignore[index]
-    assert payload["config"]["mode"] == "auto"  # type: ignore[index]
+    assert payload["config"]["mode"] == "factual"  # type: ignore[index]
 
 
 def test_text_round_trip(text_schema: DatasetSchema, text_request: TextExplanationRequest) -> None:
@@ -66,7 +66,7 @@ def test_user_prompt_is_deterministic(
 ) -> None:
     """Same inputs must produce byte-identical output (sort_keys=True)."""
     template = EchoPromptTemplate()
-    cfg = ExplanationConfig()
+    cfg = ExplanationConfig(mode="factual")
     _, u1 = template.render(tabular_request, tabular_schema, cfg)
     _, u2 = template.render(tabular_request, tabular_schema, cfg)
     assert u1 == u2

@@ -15,7 +15,7 @@ Each gets its own PR and its own ADR.
 import time
 import warnings
 
-from xainarratives.config import ExplanationConfig, ExplanationModeOrAuto
+from xainarratives.config import ExplanationConfig
 from xainarratives.guardrails import class_name_mentioned, extract_narrative_claims
 from xainarratives.guardrails.types import GuardrailResult, NarrativeExtraction
 from xainarratives.prompts.base import PromptTemplate
@@ -43,14 +43,14 @@ class Explainer:
         self.schema = schema
         self.llm = llm
         self.prompt_template = prompt_template
-        self.config = config or ExplanationConfig()
+        self.config = config if config is not None else ExplanationConfig(mode="factual")
         self.judge_llm = judge_llm if judge_llm is not None else self.llm
 
     def explain(self, request: ExplanationRequest) -> ExplanationResult:
         self._validate_modality(request)
         self._warn_if_counterfactual_does_not_flip(request)
 
-        mode = self._resolve_mode(request)
+        mode = self._validate_mode(request)
         system, user = self.prompt_template.render(request, self.schema, self.config)
 
         start = time.perf_counter()
@@ -97,30 +97,20 @@ class Explainer:
                 f"schema modality {self.schema.modality.value!r}."
             )
 
-    def _resolve_mode(self, request: ExplanationRequest) -> ExplanationMode:
+    def _validate_mode(self, request: ExplanationRequest) -> ExplanationMode:
         has_cf = bool(request.counterfactuals)
-        has_contrast = request.contrast_class is not None
-
-        if self.config.mode == "auto":
-            if has_cf:
-                return "counterfactual"
-            if has_contrast:
-                return "contrastive"
-            return "factual"
-
-        # Explicit mode: verify the request carries its required inputs.
-        self._check_explicit_mode(self.config.mode, has_cf=has_cf, has_contrast=has_contrast)
+        self._check_explicit_mode(self.config.mode, has_cf=has_cf)
         return self.config.mode
 
     @staticmethod
-    def _check_explicit_mode(
-        mode: ExplanationModeOrAuto, *, has_cf: bool, has_contrast: bool
-    ) -> None:
+    def _check_explicit_mode(mode: ExplanationMode, *, has_cf: bool) -> None:
         if mode == "counterfactual" and not has_cf:
             raise ValueError("config.mode='counterfactual' requires request.counterfactuals.")
-        if mode == "contrastive" and not has_contrast:
-            raise ValueError("config.mode='contrastive' requires request.contrast_class.")
-        # "factual" has no prerequisites; "auto" is handled by the caller.
+        if mode == "factual_counterfactual" and not has_cf:
+            raise ValueError(
+                "config.mode='factual_counterfactual' requires request.counterfactuals."
+            )
+        # "factual" has no prerequisites.
 
     @staticmethod
     def _warn_if_counterfactual_does_not_flip(request: ExplanationRequest) -> None:

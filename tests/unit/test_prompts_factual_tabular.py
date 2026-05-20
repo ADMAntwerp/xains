@@ -27,7 +27,7 @@ def _assert_value_near_name(user: str, name: str, value: str, window: int = 40) 
 def test_render_returns_non_empty_system_and_user(
     tabular_schema: DatasetSchema, tabular_request: TabularExplanationRequest
 ) -> None:
-    config = ExplanationConfig()
+    config = ExplanationConfig(mode="factual")
     system, user = FactualTabularPromptTemplate().render(tabular_request, tabular_schema, config)
     assert isinstance(system, str) and system.strip()
     assert isinstance(user, str) and user.strip()
@@ -36,7 +36,7 @@ def test_render_returns_non_empty_system_and_user(
 def test_all_top_k_features_appear_in_user_prompt(
     tabular_schema: DatasetSchema, tabular_request: TabularExplanationRequest
 ) -> None:
-    config = ExplanationConfig(top_k_features=2)
+    config = ExplanationConfig(mode="factual", top_k_features=2)
     _, user = FactualTabularPromptTemplate().render(tabular_request, tabular_schema, config)
     assert "dti" in user
     assert "age" in user
@@ -45,7 +45,7 @@ def test_all_top_k_features_appear_in_user_prompt(
 def test_top_k_truncates_to_k(
     tabular_schema: DatasetSchema, tabular_request: TabularExplanationRequest
 ) -> None:
-    config = ExplanationConfig(top_k_features=1)
+    config = ExplanationConfig(mode="factual", top_k_features=1)
     _, user = FactualTabularPromptTemplate().render(tabular_request, tabular_schema, config)
     assert "dti" in user
     assert "age" not in user
@@ -62,7 +62,7 @@ def test_unranked_contributions_sorted_by_abs_importance(
             TabularContribution(name="dti", value=0.41, importance=0.37),
         ],
     )
-    config = ExplanationConfig(top_k_features=1)
+    config = ExplanationConfig(mode="factual", top_k_features=1)
     _, user = FactualTabularPromptTemplate().render(request, tabular_schema, config)
     assert "dti" in user
     assert "age" not in user
@@ -79,7 +79,7 @@ def test_top_k_tie_breaking_widens_the_cut(
             TabularContribution(name="dti", value=0.41, importance=-0.30),
         ],
     )
-    config = ExplanationConfig(top_k_features=1)
+    config = ExplanationConfig(mode="factual", top_k_features=1)
     _, user = FactualTabularPromptTemplate().render(request, tabular_schema, config)
     assert "age" in user
     assert "dti" in user
@@ -95,7 +95,7 @@ def test_out_of_schema_contribution_name_raises(
             TabularContribution(name="bogus", value=1.0, importance=0.5),
         ],
     )
-    config = ExplanationConfig()
+    config = ExplanationConfig(mode="factual")
     with pytest.raises(ValueError, match="bogus"):
         FactualTabularPromptTemplate().render(request, tabular_schema, config)
 
@@ -103,7 +103,7 @@ def test_out_of_schema_contribution_name_raises(
 def test_predicted_class_uses_human_label(
     tabular_schema: DatasetSchema, tabular_request: TabularExplanationRequest
 ) -> None:
-    config = ExplanationConfig()
+    config = ExplanationConfig(mode="factual")
     _, user = FactualTabularPromptTemplate().render(tabular_request, tabular_schema, config)
     assert "Defaulted" in user
 
@@ -118,7 +118,7 @@ def test_unknown_predicted_class_raises(
             TabularContribution(name="dti", value=0.41, importance=0.37),
         ],
     )
-    config = ExplanationConfig()
+    config = ExplanationConfig(mode="factual")
     with pytest.raises(ValueError, match="99"):
         FactualTabularPromptTemplate().render(request, tabular_schema, config)
 
@@ -126,7 +126,7 @@ def test_unknown_predicted_class_raises(
 def test_audience_reflected_in_prompt(
     tabular_schema: DatasetSchema, tabular_request: TabularExplanationRequest
 ) -> None:
-    config = ExplanationConfig(audience="business")
+    config = ExplanationConfig(mode="factual", audience="business")
     system, user = FactualTabularPromptTemplate().render(tabular_request, tabular_schema, config)
     assert "business" in (system + user)
 
@@ -134,7 +134,7 @@ def test_audience_reflected_in_prompt(
 def test_tone_reflected_in_prompt(
     tabular_schema: DatasetSchema, tabular_request: TabularExplanationRequest
 ) -> None:
-    config = ExplanationConfig(tone="empathetic")
+    config = ExplanationConfig(mode="factual", tone="empathetic")
     system, user = FactualTabularPromptTemplate().render(tabular_request, tabular_schema, config)
     assert "empathetic" in (system + user)
 
@@ -142,7 +142,7 @@ def test_tone_reflected_in_prompt(
 def test_max_length_words_reflected_in_prompt(
     tabular_schema: DatasetSchema, tabular_request: TabularExplanationRequest
 ) -> None:
-    config = ExplanationConfig(max_length_words=77)
+    config = ExplanationConfig(mode="factual", max_length_words=77)
     system, user = FactualTabularPromptTemplate().render(tabular_request, tabular_schema, config)
     assert "77" in (system + user)
 
@@ -150,7 +150,7 @@ def test_max_length_words_reflected_in_prompt(
 def test_rejects_non_tabular_request(
     tabular_schema: DatasetSchema, text_request: TextExplanationRequest
 ) -> None:
-    config = ExplanationConfig()
+    config = ExplanationConfig(mode="factual")
     with pytest.raises(TypeError):
         FactualTabularPromptTemplate().render(text_request, tabular_schema, config)
 
@@ -158,7 +158,7 @@ def test_rejects_non_tabular_request(
 def test_system_prompt_mentions_target_name(
     tabular_schema: DatasetSchema, tabular_request: TabularExplanationRequest
 ) -> None:
-    config = ExplanationConfig()
+    config = ExplanationConfig(mode="factual")
     system, _ = FactualTabularPromptTemplate().render(tabular_request, tabular_schema, config)
     assert "default" in system
 
@@ -167,7 +167,7 @@ def test_render_is_deterministic(
     tabular_schema: DatasetSchema, tabular_request: TabularExplanationRequest
 ) -> None:
     template = FactualTabularPromptTemplate()
-    config = ExplanationConfig()
+    config = ExplanationConfig(mode="factual")
     s1, u1 = template.render(tabular_request, tabular_schema, config)
     s2, u2 = template.render(tabular_request, tabular_schema, config)
     assert s1 == s2
@@ -177,7 +177,7 @@ def test_render_is_deterministic(
 def test_top_k_feature_values_surfaced(
     tabular_schema: DatasetSchema, tabular_request: TabularExplanationRequest
 ) -> None:
-    config = ExplanationConfig(top_k_features=2)
+    config = ExplanationConfig(mode="factual", top_k_features=2)
     _, user = FactualTabularPromptTemplate().render(tabular_request, tabular_schema, config)
     _assert_value_near_name(user, "dti", "0.41")
     _assert_value_near_name(user, "age", "29")
@@ -204,7 +204,7 @@ def test_string_predicted_class_rendered_as_human_label() -> None:
             TabularContribution(name="x", value=1.0, importance=0.5),
         ],
     )
-    config = ExplanationConfig()
+    config = ExplanationConfig(mode="factual")
     _, user = FactualTabularPromptTemplate().render(request, schema, config)
     assert "Alpha" in user
 
@@ -212,7 +212,7 @@ def test_string_predicted_class_rendered_as_human_label() -> None:
 def test_system_includes_default_narrative_rules(
     tabular_schema: DatasetSchema, tabular_request: TabularExplanationRequest
 ) -> None:
-    config = ExplanationConfig()
+    config = ExplanationConfig(mode="factual")
     system, _ = FactualTabularPromptTemplate().render(tabular_request, tabular_schema, config)
     # Default rules block appears verbatim in the system message.
     assert DEFAULT_NARRATIVE_RULES in system
@@ -223,7 +223,7 @@ def test_system_includes_default_narrative_rules(
 def test_system_includes_custom_narrative_rules(
     tabular_schema: DatasetSchema, tabular_request: TabularExplanationRequest
 ) -> None:
-    config = ExplanationConfig(narrative_rules="CUSTOM_NARRATIVE_RULES")
+    config = ExplanationConfig(mode="factual", narrative_rules="CUSTOM_NARRATIVE_RULES")
     system, _ = FactualTabularPromptTemplate().render(tabular_request, tabular_schema, config)
     # Custom block replaces (not appends to) the default.
     assert "CUSTOM_NARRATIVE_RULES" in system

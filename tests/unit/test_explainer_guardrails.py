@@ -144,7 +144,7 @@ def test_guardrails_disabled_sets_all_three_fields_none(
     tab_schema: DatasetSchema, tab_request: TabularExplanationRequest
 ) -> None:
     llm = MockLLMProvider(responses=[NARRATIVE], model_name="gen")
-    config = ExplanationConfig(run_guardrails=False)
+    config = ExplanationConfig(mode="factual", run_guardrails=False)
     expl = Explainer(
         schema=tab_schema,
         llm=llm,
@@ -162,7 +162,7 @@ def test_rule_based_run_by_default(
     tab_schema: DatasetSchema, tab_request: TabularExplanationRequest
 ) -> None:
     llm = MockLLMProvider(responses=[NARRATIVE], model_name="gen")
-    config = ExplanationConfig(extract_narrative=False)
+    config = ExplanationConfig(mode="factual", extract_narrative=False)
     expl = Explainer(
         schema=tab_schema,
         llm=llm,
@@ -191,7 +191,7 @@ def test_extraction_disabled_runs_only_rule_based(
     tab_schema: DatasetSchema, tab_request: TabularExplanationRequest
 ) -> None:
     llm = MockLLMProvider(responses=[NARRATIVE], model_name="gen")
-    config = ExplanationConfig(extract_narrative=False)
+    config = ExplanationConfig(mode="factual", extract_narrative=False)
     expl = Explainer(
         schema=tab_schema,
         llm=llm,

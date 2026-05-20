@@ -74,47 +74,7 @@ def test_modality_mismatch_raises(
 
 
 # ---------------------------------------------------------------- #
-# Mode resolution (auto)                                           #
-# ---------------------------------------------------------------- #
-
-
-def test_auto_resolves_counterfactual_when_cfs_present(
-    tabular_schema: DatasetSchema, tabular_request: TabularExplanationRequest
-) -> None:
-    req = tabular_request.model_copy(
-        update={
-            "counterfactuals": [
-                TabularCounterfactual(predicted_class=0, features={"age": 29, "dti": 0.20})
-            ]
-        }
-    )
-    assert _explainer(tabular_schema).explain(req).mode == "counterfactual"
-
-
-def test_auto_resolves_contrastive_when_contrast_class_set(
-    tabular_schema: DatasetSchema, tabular_request: TabularExplanationRequest
-) -> None:
-    req = tabular_request.model_copy(update={"contrast_class": 0})
-    assert _explainer(tabular_schema).explain(req).mode == "contrastive"
-
-
-def test_auto_prefers_counterfactual_over_contrastive(
-    tabular_schema: DatasetSchema, tabular_request: TabularExplanationRequest
-) -> None:
-    """When both are present, counterfactual wins (more informative)."""
-    req = tabular_request.model_copy(
-        update={
-            "contrast_class": 0,
-            "counterfactuals": [
-                TabularCounterfactual(predicted_class=0, features={"age": 29, "dti": 0.20})
-            ],
-        }
-    )
-    assert _explainer(tabular_schema).explain(req).mode == "counterfactual"
-
-
-# ---------------------------------------------------------------- #
-# Mode resolution (explicit)                                       #
+# Mode validation                                                  #
 # ---------------------------------------------------------------- #
 
 
@@ -131,16 +91,16 @@ def test_explicit_counterfactual_without_cfs_raises(
         explainer.explain(tabular_request)
 
 
-def test_explicit_contrastive_without_contrast_class_raises(
+def test_explicit_factual_counterfactual_without_counterfactuals_raises(
     tabular_schema: DatasetSchema, tabular_request: TabularExplanationRequest
 ) -> None:
     explainer = Explainer(
         schema=tabular_schema,
         llm=MockLLMProvider(),
         prompt_template=EchoPromptTemplate(),
-        config=ExplanationConfig(mode="contrastive"),
+        config=ExplanationConfig(mode="factual_counterfactual"),
     )
-    with pytest.raises(ValueError, match=r"requires request\.contrast_class"):
+    with pytest.raises(ValueError, match=r"requires request\.counterfactuals"):
         explainer.explain(tabular_request)
 
 

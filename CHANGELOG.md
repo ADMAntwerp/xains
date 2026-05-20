@@ -9,6 +9,22 @@ While `0.y.z`, minor versions may contain breaking changes.
 
 ## [Unreleased]
 
+### Changed (BREAKING)
+
+- `ExplanationConfig.mode` is now a required field with no default.
+  Construction without `mode=` raises `ValidationError`. Previously
+  defaulted to `"auto"`.
+- Mode vocabulary is now `"factual"`, `"counterfactual"`,
+  `"factual_counterfactual"`. The previous values `"auto"` and
+  `"contrastive"` are removed. `"contrastive"` is renamed and redefined
+  as `"factual_counterfactual"` (a narrative weaving both factual
+  contributions and counterfactual(s)).
+- `Explainer._resolve_mode` renamed to `_validate_mode` — the method no
+  longer infers mode from the request shape; it validates the explicit
+  mode and returns it.
+- ADR 0012: explanation-mode vocabulary finalized (supersedes the mode
+  portion of ADR 0003).
+
 ### Added
 
 - `xainarratives.metrics` subpackage: `sign_faithfulness`,
