@@ -1,12 +1,8 @@
 # xainarratives
 
-Natural-language verbalization of ML model predictions from **pre-computed** attributions.
+Natural-language verbalization of tabular ML model predictions from **pre-computed** attributions.
 
-> **Scope.** `xainarratives` is a post-hoc *verbalizer*, not an XAI toolkit. It takes a dataset schema, a model prediction, pre-computed attributions (SHAP, LIME, sklearn `feature_importances_`, GNNExplainer, Captum, etc.), and optional pre-computed counterfactuals, and produces natural-language explanations plus verbalization-quality metrics. It never trains models, never runs inference, never computes attributions, and never searches for counterfactuals — those are the user's responsibility, upstream.
-
-Supports four modalities: **tabular**, **text**, **image**, **graph** (GNN).
-
-> ⚠️ **Status: v0.0.1 alpha.** The API will break. Pin exact versions if you depend on it.
+> **Scope.** This library generates natural-language XAI narratives from technical outputs like SHAP attributions or counterfactual explanations, making the explanations more transparent and understandable.
 
 ## Install
 
@@ -17,7 +13,7 @@ pip install xainarratives[dev]     # dev tooling
 
 ## Quickstart: end-to-end notebook
 
-For the full pipeline (load German Credit, train a RandomForest, compute SHAP, generate a narrative with Claude, extract structured claims, and score extraction fidelity plus the seven Cedro & Martens 2026 narrativity metrics) see notebooks/01_quickstart.ipynb.
+For the full pipeline - load German Credit, train a RandomForest, compute SHAP, generate a narrative with an LLM, extract structured claims, and score the narrative on faithfulness and narrativity - see `notebooks/01_quickstart.ipynb`.
 
 Install and launch:
 
@@ -28,7 +24,7 @@ Install and launch:
 
 The rendered notebook on GitHub shows committed outputs from one realization; LLM responses and perplexity numbers shift run-to-run.
 
-## Minimal example (mock LLM, no API keys)
+## Minimal example
 
 ```python
 from xainarratives import (
@@ -36,8 +32,8 @@ from xainarratives import (
     TabularExplanationRequest, TabularContribution, Prediction,
     ExplanationConfig, Explainer,
 )
-from xainarratives.providers import MockLLMProvider
-from xainarratives.prompts import EchoPromptTemplate
+from xainarratives.providers import AnthropicProvider
+from xainarratives.prompts import FactualTabularPromptTemplate
 
 schema = DatasetSchema(
     modality=Modality.TABULAR,
@@ -67,27 +63,17 @@ request = TabularExplanationRequest(
 
 explainer = Explainer(
     schema=schema,
-    llm=MockLLMProvider(responses=["High DTI is the dominant risk driver."]),
-    prompt_template=EchoPromptTemplate(),
-    config=ExplanationConfig(audience="end_user"),
+    llm=AnthropicProvider(model="claude-haiku-4-5"),
+    prompt_template=FactualTabularPromptTemplate(),
+    config=ExplanationConfig(mode="factual", audience="end_user"),
 )
 
 result = explainer.explain(request)
 print(result.text)
 ```
 
-## Current capabilities
-
-- Core data model (PR 1): pydantic schema, request, contribution, prediction, and config types across four modalities.
-- AnthropicProvider (PR 2): real Anthropic Claude API integration via the official SDK.
-- from_feature_importance adapter (PR 3): converts any signed per-feature attribution (SHAP, LIME, sklearn feature_importances_) into a TabularExplanationRequest.
-- Guardrails and narrative extraction (PR 4): rule checks plus LLM-based extract_narrative_claims, orchestrated by Explainer.explain.
-- Extraction scoring (PR 5, revised by ADR 0007): sign / value / rank faithfulness, coverage, hallucination count, readability.
-- Paper narrativity metrics (PR 6): the seven Cedro & Martens 2026 metrics (CSR, DCPR, CCPR, CECPR, FDR, TTCPR, VCPR).
-- Perplexity providers (PR 7): HuggingFacePerplexityProvider (local) and OpenAICompatibleEchoProvider (any OpenAI-compatible /v1/completions endpoint).
-
-See docs/design.md for the full design and docs/decisions/ for recorded architecture decisions (ADRs 0001-0010).
+See `docs/design.md` for the full design and `docs/decisions/` for recorded architecture decisions.
 
 ## License
 
-MIT — see [`LICENSE`](LICENSE).
+MIT - see [`LICENSE`](LICENSE).
