@@ -24,6 +24,10 @@ While `0.y.z`, minor versions may contain breaking changes.
   mode and returns it.
 - ADR 0012: explanation-mode vocabulary finalized (supersedes the mode
   portion of ADR 0003).
+- Removed `include_confidence` and `include_caveats` fields from
+  `ExplanationConfig`. They had no consumer in the library and never
+  affected behavior. Setting them now raises `ValidationError`.
+  ADR 0013.
 
 ### Added
 

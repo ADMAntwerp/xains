@@ -60,3 +60,10 @@ def test_narrative_rules_override() -> None:
     assert c.narrative_rules == "custom rules block"
     # Override replaces; it does not append to the default.
     assert DEFAULT_NARRATIVE_RULES not in c.narrative_rules
+
+
+def test_removed_fields_rejected() -> None:
+    with pytest.raises(ValidationError):
+        ExplanationConfig(mode="factual", include_confidence=False)  # type: ignore[call-arg]
+    with pytest.raises(ValidationError):
+        ExplanationConfig(mode="factual", include_caveats=False)  # type: ignore[call-arg]
