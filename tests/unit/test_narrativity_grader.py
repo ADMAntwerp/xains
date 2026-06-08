@@ -1,11 +1,11 @@
-"""Unit tests for score_narrativity and NarrativityScores."""
+"""Unit tests for grade_narrativity and NarrativityGrades."""
 
 import sys
 
 import pytest
 from pydantic import ValidationError
 
-from xainarratives import NarrativityScores, score_narrativity
+from xainarratives import NarrativityGrades, grade_narrativity
 
 SAMPLE_TEXT = (
     "The applicant was predicted to default. "
@@ -49,61 +49,61 @@ class _ConstantProvider:
 _RICH_SCRIPT = [12.0, 10.0, 8.5, 7.5, 14.0, 10.0, 10.0, 10.0, 10.0, 10.0]
 
 
-def test_score_narrativity_populates_all_fields_for_complete_narrative() -> None:
+def test_grade_narrativity_populates_all_fields_for_complete_narrative() -> None:
     provider = _FakeProvider(list(_RICH_SCRIPT))
-    scores = score_narrativity(SAMPLE_TEXT, provider)
-    assert isinstance(scores, NarrativityScores)
+    grades = grade_narrativity(SAMPLE_TEXT, provider)
+    assert isinstance(grades, NarrativityGrades)
     # 7 derived metrics
-    assert scores.csr is not None
-    assert scores.dcpr is not None
-    assert scores.ccpr is not None
-    assert scores.cecpr is not None
-    assert scores.fdr is not None
-    assert scores.ttcpr is not None
-    assert scores.vcpr is not None
+    assert grades.csr is not None
+    assert grades.dcpr is not None
+    assert grades.ccpr is not None
+    assert grades.cecpr is not None
+    assert grades.fdr is not None
+    assert grades.ttcpr is not None
+    assert grades.vcpr is not None
     # 9 auxiliaries
-    assert scores.ppl_ordered is not None
-    assert scores.ppl_shuffled is not None
-    assert scores.decay_constant is not None
-    assert scores.dist2 is not None
-    assert scores.ttr is not None
-    assert scores.vr is not None
-    assert scores.cr is not None
-    assert scores.cer is not None
-    assert scores.n_sentences == 4
+    assert grades.ppl_ordered is not None
+    assert grades.ppl_shuffled is not None
+    assert grades.decay_constant is not None
+    assert grades.dist2 is not None
+    assert grades.ttr is not None
+    assert grades.vr is not None
+    assert grades.cr is not None
+    assert grades.cer is not None
+    assert grades.n_sentences == 4
 
 
-def test_score_narrativity_n_sentences_recorded() -> None:
+def test_grade_narrativity_n_sentences_recorded() -> None:
     provider = _FakeProvider(list(_RICH_SCRIPT))
-    scores = score_narrativity(SAMPLE_TEXT, provider)
-    assert scores.n_sentences == 4
+    grades = grade_narrativity(SAMPLE_TEXT, provider)
+    assert grades.n_sentences == 4
 
 
-def test_score_narrativity_handles_provider_failure_gracefully() -> None:
+def test_grade_narrativity_handles_provider_failure_gracefully() -> None:
     """Provider returns None → PPL-dependent metrics None; text-only auxiliaries still populate."""
     provider = _ConstantProvider(value=None)
-    scores = score_narrativity(SAMPLE_TEXT, provider)
+    grades = grade_narrativity(SAMPLE_TEXT, provider)
     # PPL-dependent metrics → None
-    assert scores.csr is None
-    assert scores.dcpr is None
-    assert scores.ccpr is None
-    assert scores.cecpr is None
-    assert scores.fdr is None
-    assert scores.ttcpr is None
-    assert scores.vcpr is None
-    assert scores.ppl_ordered is None
-    assert scores.ppl_shuffled is None
-    assert scores.decay_constant is None
+    assert grades.csr is None
+    assert grades.dcpr is None
+    assert grades.ccpr is None
+    assert grades.cecpr is None
+    assert grades.fdr is None
+    assert grades.ttcpr is None
+    assert grades.vcpr is None
+    assert grades.ppl_ordered is None
+    assert grades.ppl_shuffled is None
+    assert grades.decay_constant is None
     # Text-only auxiliaries still populate.
-    assert scores.ttr is not None
-    assert scores.dist2 is not None
-    assert scores.vr is not None
-    assert scores.cr is not None
-    assert scores.cer is not None
-    assert scores.n_sentences == 4
+    assert grades.ttr is not None
+    assert grades.dist2 is not None
+    assert grades.vr is not None
+    assert grades.cr is not None
+    assert grades.cer is not None
+    assert grades.n_sentences == 4
 
 
-def test_score_narrativity_handles_missing_nltk_gracefully(
+def test_grade_narrativity_handles_missing_nltk_gracefully(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """NLTK missing: sentence-dependent metrics + POS-tagging-dependent become None;
@@ -111,58 +111,58 @@ def test_score_narrativity_handles_missing_nltk_gracefully(
     """
     monkeypatch.setitem(sys.modules, "nltk", None)
     provider = _FakeProvider(list(_RICH_SCRIPT))
-    scores = score_narrativity(SAMPLE_TEXT, provider)
+    grades = grade_narrativity(SAMPLE_TEXT, provider)
     # Sentence-dependent / POS-dependent → None
-    assert scores.n_sentences is None
-    assert scores.csr is None
-    assert scores.dcpr is None
-    assert scores.ccpr is None
-    assert scores.cecpr is None
-    assert scores.ttcpr is None
-    assert scores.vcpr is None
-    assert scores.vr is None
+    assert grades.n_sentences is None
+    assert grades.csr is None
+    assert grades.dcpr is None
+    assert grades.ccpr is None
+    assert grades.cecpr is None
+    assert grades.ttcpr is None
+    assert grades.vcpr is None
+    assert grades.vr is None
     # Pure-Python auxiliaries still work.
-    assert scores.ttr is not None
-    assert scores.dist2 is not None
-    assert scores.cr is not None
-    assert scores.cer is not None
+    assert grades.ttr is not None
+    assert grades.dist2 is not None
+    assert grades.cr is not None
+    assert grades.cer is not None
     # fdr / ppl_ordered: implementation-dependent (could reuse cum_ppl[-1] or
     # call the provider directly). Intentionally not asserted.
 
 
-def test_score_narrativity_handles_missing_scipy_gracefully(
+def test_grade_narrativity_handles_missing_scipy_gracefully(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """scipy missing: r-based metrics become None; CSR, FDR, and auxiliaries still compute."""
     monkeypatch.setitem(sys.modules, "scipy", None)
     monkeypatch.setitem(sys.modules, "scipy.optimize", None)
     provider = _FakeProvider(list(_RICH_SCRIPT))
-    scores = score_narrativity(SAMPLE_TEXT, provider)
+    grades = grade_narrativity(SAMPLE_TEXT, provider)
     # r-based metrics → None (curve fit unavailable)
-    assert scores.dcpr is None
-    assert scores.ccpr is None
-    assert scores.cecpr is None
-    assert scores.ttcpr is None
-    assert scores.vcpr is None
-    assert scores.decay_constant is None
+    assert grades.dcpr is None
+    assert grades.ccpr is None
+    assert grades.cecpr is None
+    assert grades.ttcpr is None
+    assert grades.vcpr is None
+    assert grades.decay_constant is None
     # Non-r-based metrics still compute.
-    assert scores.csr is not None
-    assert scores.fdr is not None
-    assert scores.ppl_ordered is not None
-    assert scores.ppl_shuffled is not None
+    assert grades.csr is not None
+    assert grades.fdr is not None
+    assert grades.ppl_ordered is not None
+    assert grades.ppl_shuffled is not None
     # Auxiliaries.
-    assert scores.n_sentences == 4
-    assert scores.ttr is not None
-    assert scores.dist2 is not None
-    assert scores.vr is not None
-    assert scores.cr is not None
-    assert scores.cer is not None
+    assert grades.n_sentences == 4
+    assert grades.ttr is not None
+    assert grades.dist2 is not None
+    assert grades.vr is not None
+    assert grades.cr is not None
+    assert grades.cer is not None
 
 
-def test_narrativity_scores_rejects_extra_fields() -> None:
-    """NarrativityScores has ConfigDict(extra='forbid')."""
+def test_narrativity_grades_rejects_extra_fields() -> None:
+    """NarrativityGrades has ConfigDict(extra='forbid')."""
     with pytest.raises(ValidationError):
-        NarrativityScores(  # type: ignore[call-arg]
+        NarrativityGrades(  # type: ignore[call-arg]
             csr=None,
             dcpr=None,
             ccpr=None,

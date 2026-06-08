@@ -28,6 +28,17 @@ While `0.y.z`, minor versions may contain breaking changes.
   `ExplanationConfig`. They had no consumer in the library and never
   affected behavior. Setting them now raises `ValidationError`.
   ADR 0013.
+- Scoring API renamed for lexical consistency (the word "score" reads
+  like a prediction/confidence score, which is not what these functions
+  produce):
+  `score_extraction` → `grade_extraction`,
+  `score_narrativity` → `grade_narrativity`,
+  `ExtractionScores` → `ExtractionGrades`,
+  `NarrativityScores` → `NarrativityGrades`.
+  The source module `xainarratives.metrics.scorer` is renamed to
+  `xainarratives.metrics.grader`; top-level re-exports
+  (`xainarratives.ExtractionGrades`, etc.) keep the same import path
+  modulo the new name. ADR 0014.
 
 ### Added
 
@@ -125,7 +136,7 @@ While `0.y.z`, minor versions may contain breaking changes.
 - `extract_narrative_claims` now rejects `features` keys not in the
   schema's resolution vocabulary as a parse failure (advisory
   `GuardrailResult`, no exception).
-- `score_extraction` swallows `ImportError` from `readability` so a
+- `grade_extraction` swallows `ImportError` from `readability` so a
   missing `textstat` install degrades to `readability=None` rather than
   cascading to the whole scorer. `readability()` itself keeps the
   strict `ImportError` contract for direct callers.

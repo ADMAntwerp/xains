@@ -1,6 +1,6 @@
-"""Unit tests for score_extraction and ExtractionScores.
+"""Unit tests for grade_extraction and ExtractionGrades.
 
-The scorer is the integration point for all metrics: pure data in, scores
+The grader is the integration point for all metrics: pure data in, scores
 out. Perplexity is the only metric that touches anything provider-shaped,
 and even there the provider is supplied by the caller.
 """
@@ -13,7 +13,7 @@ from pydantic import ValidationError
 
 from xainarratives import (
     DatasetSchema,
-    ExtractionScores,
+    ExtractionGrades,
     FeatureClaim,
     FeatureSchema,
     Modality,
@@ -23,7 +23,7 @@ from xainarratives import (
     TabularExplanationRequest,
     TargetSchema,
 )
-from xainarratives.metrics import score_extraction
+from xainarratives.metrics import grade_extraction
 
 # ------------------------------------------------------ helpers
 
@@ -86,7 +86,7 @@ class _FakeProvider:
 # ------------------------------------------------------ tests
 
 
-def test_score_extraction_populates_all_fields_for_complete_extraction() -> None:
+def test_grade_extraction_populates_all_fields_for_complete_extraction() -> None:
     request = _request(("dti", 0.41, 0.37), ("age", 29, -0.12))
     schema = _schema("dti", "age")
     extraction = _extraction(
@@ -97,37 +97,37 @@ def test_score_extraction_populates_all_fields_for_complete_extraction() -> None
     )
     narrative = "Higher dti pushed the applicant toward default. Younger age slightly offset this."
     fake = _FakeProvider(return_value=42.0)
-    scores = score_extraction(
+    grades = grade_extraction(
         extraction,
         request,
         schema,
         narrative_text=narrative,
         perplexity_provider=fake,
     )
-    assert isinstance(scores, ExtractionScores)
-    assert scores.sign_faithfulness == 1.0
-    assert scores.value_faithfulness == 1.0
-    assert scores.rank_correlation is not None
-    assert scores.coverage == 1.0  # 2 of min(10, 2) = 2.
-    assert scores.hallucination_count == 0
-    assert scores.readability is not None
-    assert scores.perplexity == 42.0
+    assert isinstance(grades, ExtractionGrades)
+    assert grades.sign_faithfulness == 1.0
+    assert grades.value_faithfulness == 1.0
+    assert grades.rank_correlation is not None
+    assert grades.coverage == 1.0  # 2 of min(10, 2) = 2.
+    assert grades.hallucination_count == 0
+    assert grades.readability is not None
+    assert grades.perplexity == 42.0
 
 
-def test_score_extraction_uses_disabled_perplexity_by_default() -> None:
+def test_grade_extraction_uses_disabled_perplexity_by_default() -> None:
     request = _request(("dti", 0.41, 0.37))
     schema = _schema("dti")
     extraction = _extraction(features={"dti": _claim("dti", rank=1, sign=1)})
-    scores = score_extraction(extraction, request, schema, narrative_text="Some narrative text.")
-    assert scores.perplexity is None
+    grades = grade_extraction(extraction, request, schema, narrative_text="Some narrative text.")
+    assert grades.perplexity is None
 
 
-def test_score_extraction_calls_supplied_perplexity_provider() -> None:
+def test_grade_extraction_calls_supplied_perplexity_provider() -> None:
     request = _request(("dti", 0.41, 0.37))
     schema = _schema("dti")
     extraction = _extraction(features={"dti": _claim("dti", rank=1, sign=1)})
     fake = _FakeProvider(return_value=99.5)
-    scores = score_extraction(
+    grades = grade_extraction(
         extraction,
         request,
         schema,
@@ -135,38 +135,38 @@ def test_score_extraction_calls_supplied_perplexity_provider() -> None:
         perplexity_provider=fake,
     )
     assert len(fake.calls) == 1
-    assert scores.perplexity == 99.5
+    assert grades.perplexity == 99.5
 
 
-def test_score_extraction_with_no_resolved_features_sets_fidelity_metrics_none() -> None:
+def test_grade_extraction_with_no_resolved_features_sets_fidelity_metrics_none() -> None:
     request = _request(("dti", 0.41, 0.37))
     schema = _schema("dti")
     extraction = _extraction(features={})
-    scores = score_extraction(extraction, request, schema, narrative_text="Some narrative text.")
+    grades = grade_extraction(extraction, request, schema, narrative_text="Some narrative text.")
     # Fidelity metrics are undefined when there's nothing to compare.
-    assert scores.sign_faithfulness is None
-    assert scores.value_faithfulness is None
-    assert scores.rank_correlation is None
+    assert grades.sign_faithfulness is None
+    assert grades.value_faithfulness is None
+    assert grades.rank_correlation is None
     # Coverage and hallucination_count are always defined.
-    assert scores.coverage == 0.0
-    assert scores.hallucination_count == 0
+    assert grades.coverage == 0.0
+    assert grades.hallucination_count == 0
 
 
-def test_score_extraction_forwards_prompt_version() -> None:
+def test_grade_extraction_forwards_prompt_version() -> None:
     request = _request(("dti", 0.41, 0.37))
     schema = _schema("dti")
     extraction = _extraction(
         features={"dti": _claim("dti", rank=1, sign=1)},
         prompt_version="2",
     )
-    scores = score_extraction(extraction, request, schema, narrative_text="Some narrative text.")
-    assert scores.prompt_version == "2"
+    grades = grade_extraction(extraction, request, schema, narrative_text="Some narrative text.")
+    assert grades.prompt_version == "2"
 
 
-def test_extraction_scores_rejects_extra_fields() -> None:
-    """ExtractionScores has ConfigDict(extra='forbid')."""
+def test_extraction_grades_rejects_extra_fields() -> None:
+    """ExtractionGrades has ConfigDict(extra='forbid')."""
     with pytest.raises(ValidationError):
-        ExtractionScores(
+        ExtractionGrades(
             sign_faithfulness=None,
             value_faithfulness=None,
             rank_correlation=None,
@@ -179,13 +179,13 @@ def test_extraction_scores_rejects_extra_fields() -> None:
         )
 
 
-def test_score_extraction_passes_narrative_text_to_perplexity_provider() -> None:
+def test_grade_extraction_passes_narrative_text_to_perplexity_provider() -> None:
     request = _request(("dti", 0.41, 0.37))
     schema = _schema("dti")
     extraction = _extraction(features={"dti": _claim("dti", rank=1, sign=1)})
     narrative = "Exact text the provider should receive."
     fake = _FakeProvider()
-    score_extraction(
+    grade_extraction(
         extraction,
         request,
         schema,
@@ -195,7 +195,7 @@ def test_score_extraction_passes_narrative_text_to_perplexity_provider() -> None
     assert fake.calls == [narrative]
 
 
-def test_score_extraction_handles_missing_textstat_gracefully(
+def test_grade_extraction_handles_missing_textstat_gracefully(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """When textstat is unavailable, readability=None but other metrics are populated."""
@@ -203,8 +203,8 @@ def test_score_extraction_handles_missing_textstat_gracefully(
     request = _request(("dti", 0.41, 0.37))
     schema = _schema("dti")
     extraction = _extraction(features={"dti": _claim("dti", rank=1, sign=1)})
-    scores = score_extraction(extraction, request, schema, narrative_text="Some narrative text.")
-    assert scores.readability is None
-    assert scores.coverage == 1.0
-    assert scores.hallucination_count == 0
-    assert scores.prompt_version == "2"
+    grades = grade_extraction(extraction, request, schema, narrative_text="Some narrative text.")
+    assert grades.readability is None
+    assert grades.coverage == 1.0
+    assert grades.hallucination_count == 0
+    assert grades.prompt_version == "2"

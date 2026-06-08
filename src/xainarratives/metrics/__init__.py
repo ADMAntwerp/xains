@@ -11,15 +11,16 @@ from xainarratives.metrics.fidelity import (
     sign_faithfulness,
     value_faithfulness,
 )
+from xainarratives.metrics.grader import ExtractionGrades, grade_extraction
 from xainarratives.metrics.narrativity import (
-    NarrativityScores,
+    NarrativityGrades,
     ccpr,
     cecpr,
     csr,
     dcpr,
     fdr,
+    grade_narrativity,
     readability,
-    score_narrativity,
     ttcpr,
     vcpr,
 )
@@ -29,13 +30,12 @@ from xainarratives.metrics.perplexity import (
 )
 from xainarratives.metrics.perplexity_api import OpenAICompatibleEchoProvider
 from xainarratives.metrics.perplexity_hf import HuggingFacePerplexityProvider
-from xainarratives.metrics.scorer import ExtractionScores, score_extraction
 
 __all__ = [
     "DisabledProvider",
-    "ExtractionScores",
+    "ExtractionGrades",
     "HuggingFacePerplexityProvider",
-    "NarrativityScores",
+    "NarrativityGrades",
     "OpenAICompatibleEchoProvider",
     "PerplexityProvider",
     "ccpr",
@@ -44,11 +44,11 @@ __all__ = [
     "csr",
     "dcpr",
     "fdr",
+    "grade_extraction",
+    "grade_narrativity",
     "hallucination_count",
     "rank_correlation",
     "readability",
-    "score_extraction",
-    "score_narrativity",
     "sign_faithfulness",
     "ttcpr",
     "value_faithfulness",

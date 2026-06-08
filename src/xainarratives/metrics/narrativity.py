@@ -1,6 +1,6 @@
 """Narrativity metrics.
 
-Primary entry: ``score_narrativity(text, provider) -> NarrativityScores``.
+Primary entry: ``grade_narrativity(text, provider) -> NarrativityGrades``.
 The seven paper metrics (CSR, DCPR, CCPR, CECPR, FDR, TTCPR, VCPR) are also
 exposed as standalone functions.
 
@@ -10,7 +10,7 @@ Narrativity in Natural Language AI Explanations" (arXiv:2604.18311).
 
 NLTK + scipy are optional dependencies (``pip install
 "xainarratives[narrativity]"``). Standalone metric functions raise
-``ImportError`` when the required packages are missing; ``score_narrativity``
+``ImportError`` when the required packages are missing; ``grade_narrativity``
 catches ``ImportError`` and degrades the affected fields to ``None``.
 """
 
@@ -261,7 +261,7 @@ def vcpr(text: str, provider: PerplexityProvider) -> float | None:
 # ====================================================================
 
 
-class NarrativityScores(BaseModel):
+class NarrativityGrades(BaseModel):
     """Aggregate of the seven paper narrativity metrics + auxiliary primitives."""
 
     model_config = ConfigDict(extra="forbid")
@@ -295,9 +295,9 @@ def _safe_call(fn: Any, *args: Any, **kwargs: Any) -> Any:
         return None
 
 
-def score_narrativity(
+def grade_narrativity(
     narrative_text: str, perplexity_provider: PerplexityProvider
-) -> NarrativityScores:
+) -> NarrativityGrades:
     """Compute all seven paper narrativity metrics + auxiliary primitives.
 
     Each metric and primitive degrades to ``None`` independently. Missing
@@ -352,7 +352,7 @@ def score_narrativity(
     if ppl_ordered is not None and ppl_ordered > 1 and dist2_val is not None:
         fdr_val = (dist2_val**2) / math.log(ppl_ordered)
 
-    return NarrativityScores(
+    return NarrativityGrades(
         csr=csr_val,
         dcpr=dcpr_val,
         ccpr=ccpr_val,
