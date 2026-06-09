@@ -23,6 +23,7 @@ SDK directly.
 """
 
 import math
+import os
 from typing import Any
 
 _MISSING_OPENAI_MESSAGE = (
@@ -33,6 +34,12 @@ _MISSING_OPENAI_MESSAGE = (
 
 class OpenAICompatibleEchoProvider:
     """Perplexity via the OpenAI ``/v1/completions`` echo + logprobs pattern.
+
+    API key resolution: pass ``api_key=`` explicitly, or leave it ``None``
+    and the value is read from ``os.environ[api_key_env_var]``. The default
+    env var is ``OPENAI_API_KEY``; for Together, pass
+    ``api_key_env_var="TOGETHER_API_KEY"``. If neither path yields a key,
+    ``__init__`` raises ``ValueError`` naming the env var that was checked.
 
     Paper-replication caveat: Cedro & Martens 2026 uses
     ``meta-llama/Llama-3.1-8B`` (the base model). That model is **not** on
@@ -53,7 +60,9 @@ class OpenAICompatibleEchoProvider:
     def __init__(
         self,
         base_url: str,
-        api_key: str,
+        *,
+        api_key: str | None = None,
+        api_key_env_var: str = "OPENAI_API_KEY",
         model: str,
         timeout: float = 30.0,
     ) -> None:
@@ -62,7 +71,14 @@ class OpenAICompatibleEchoProvider:
         except ImportError as exc:
             raise ImportError(_MISSING_OPENAI_MESSAGE) from exc
 
-        self._client: Any = openai.OpenAI(base_url=base_url, api_key=api_key, timeout=timeout)
+        resolved_key = api_key if api_key is not None else os.environ.get(api_key_env_var)
+        if resolved_key is None:
+            raise ValueError(
+                f"No API key for OpenAICompatibleEchoProvider: pass api_key=... "
+                f"or set the {api_key_env_var} environment variable."
+            )
+
+        self._client: Any = openai.OpenAI(base_url=base_url, api_key=resolved_key, timeout=timeout)
         self._model: str = model
 
     def compute(self, text: str) -> float | None:

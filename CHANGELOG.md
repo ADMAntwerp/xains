@@ -39,6 +39,11 @@ While `0.y.z`, minor versions may contain breaking changes.
   `xainarratives.metrics.grader`; top-level re-exports
   (`xainarratives.ExtractionGrades`, etc.) keep the same import path
   modulo the new name. ADR 0014.
+- `OpenAICompatibleEchoProvider` API key is now optional and keyword-only.
+  It resolves from `api_key=` if passed, else from the environment variable
+  named by `api_key_env_var` (default `OPENAI_API_KEY`), raising
+  `ValueError` if neither is set. The constructor is now keyword-only past
+  `base_url`. ADR 0015.
 
 ### Added
 
