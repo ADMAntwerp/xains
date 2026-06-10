@@ -14,10 +14,10 @@ While `0.y.z`, minor versions may contain breaking changes.
 - `ExplanationConfig.mode` is now a required field with no default.
   Construction without `mode=` raises `ValidationError`. Previously
   defaulted to `"auto"`.
-- Mode vocabulary is now `"factual"`, `"counterfactual"`,
-  `"factual_counterfactual"`. The previous values `"auto"` and
+- Mode vocabulary is now `"feature_importance"`, `"counterfactual"`,
+  `"feature_importance_counterfactual"`. The previous values `"auto"` and
   `"contrastive"` are removed. `"contrastive"` is renamed and redefined
-  as `"factual_counterfactual"` (a narrative weaving both factual
+  as `"feature_importance_counterfactual"` (a narrative weaving both factual
   contributions and counterfactual(s)).
 - `Explainer._resolve_mode` renamed to `_validate_mode` — the method no
   longer infers mode from the request shape; it validates the explicit
@@ -44,6 +44,20 @@ While `0.y.z`, minor versions may contain breaking changes.
   named by `api_key_env_var` (default `OPENAI_API_KEY`), raising
   `ValueError` if neither is set. The constructor is now keyword-only past
   `base_url`. ADR 0015.
+- Mode vocabulary renamed for semantic accuracy (the prior `"factual"`
+  collided with the counterfactual-explanation literature's meaning —
+  "factual" is the input datapoint, not an explanation style; the mode
+  actually means "explain via feature-importance contributions"):
+  `"factual"` → `"feature_importance"`,
+  `"factual_counterfactual"` → `"feature_importance_counterfactual"`.
+  `"counterfactual"` unchanged. `FactualTabularPromptTemplate` →
+  `FeatureImportanceTabularPromptTemplate`; module path
+  `xainarratives.prompts.factual_tabular` →
+  `xainarratives.prompts.feature_importance_tabular`. The CF-literature
+  use of "factual" in `Explainer._warn_if_counterfactual_does_not_flip`
+  (`factual_class` local var + warning prose) is deliberately preserved
+  as the now-unambiguous "input datapoint" sense. ADR 0016 (supersedes
+  the mode naming in ADR 0012).
 
 ### Added
 
@@ -124,7 +138,7 @@ While `0.y.z`, minor versions may contain breaking changes.
 - ADR 0010: ship a quickstart Jupyter notebook.
 - Configurable narrative-generation rules: `ExplanationConfig.narrative_rules`
   (a string field, default `DEFAULT_NARRATIVE_RULES`) is injected into the
-  system prompt by `FactualTabularPromptTemplate`. The default is the
+  system prompt by `FeatureImportanceTabularPromptTemplate`. The default is the
   four-rule operational definition of an XAI Narrative from Cedro & Martens
   2026; users override it by passing a custom value. Applies to all
   narrative-generating templates by convention.

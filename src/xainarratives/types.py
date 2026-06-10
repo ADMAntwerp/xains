@@ -188,7 +188,9 @@ ExplanationRequest = Annotated[
 # =========================================================================
 
 
-ExplanationMode = Literal["factual", "counterfactual", "factual_counterfactual"]
+ExplanationMode = Literal[
+    "feature_importance", "counterfactual", "feature_importance_counterfactual"
+]
 
 
 class ExplanationResult(BaseModel):

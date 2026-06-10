@@ -1,4 +1,4 @@
-"""FactualTabularPromptTemplate — verbalize tabular attributions as evidence prose."""
+"""FeatureImportanceTabularPromptTemplate — verbalize tabular attributions as evidence prose."""
 
 from xainarratives.config import ExplanationConfig
 from xainarratives.prompts.base import PromptTemplate
@@ -6,8 +6,8 @@ from xainarratives.schema import DatasetSchema
 from xainarratives.types import ExplanationRequest, TabularExplanationRequest
 
 
-class FactualTabularPromptTemplate(PromptTemplate):
-    """Render a factual tabular explanation prompt.
+class FeatureImportanceTabularPromptTemplate(PromptTemplate):
+    """Render a feature-importance tabular explanation prompt.
 
     Contributions are selected top-k by ``abs(importance)`` descending; ties
     at the k-th boundary widen the cut to include all tied contributions. The
@@ -22,7 +22,7 @@ class FactualTabularPromptTemplate(PromptTemplate):
     ) -> tuple[str, str]:
         if not isinstance(request, TabularExplanationRequest):
             raise TypeError(
-                f"FactualTabularPromptTemplate requires a TabularExplanationRequest, "
+                f"FeatureImportanceTabularPromptTemplate requires a TabularExplanationRequest, "
                 f"got {type(request).__name__}."
             )
 

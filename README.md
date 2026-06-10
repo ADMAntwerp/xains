@@ -33,7 +33,7 @@ from xainarratives import (
     ExplanationConfig, Explainer,
 )
 from xainarratives.providers import AnthropicProvider
-from xainarratives.prompts import FactualTabularPromptTemplate
+from xainarratives.prompts import FeatureImportanceTabularPromptTemplate
 
 schema = DatasetSchema(
     modality=Modality.TABULAR,
@@ -64,8 +64,8 @@ request = TabularExplanationRequest(
 explainer = Explainer(
     schema=schema,
     llm=AnthropicProvider(model="claude-haiku-4-5"),
-    prompt_template=FactualTabularPromptTemplate(),
-    config=ExplanationConfig(mode="factual", audience="end_user"),
+    prompt_template=FeatureImportanceTabularPromptTemplate(),
+    config=ExplanationConfig(mode="feature_importance", audience="end_user"),
 )
 
 result = explainer.explain(request)

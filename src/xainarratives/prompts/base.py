@@ -2,7 +2,8 @@
 
 A ``PromptTemplate`` turns ``(request, schema, config)`` into a concrete
 ``(system, user)`` pair. Different templates encode different explanation
-styles (factual, contrastive, counterfactual) and different audiences
+styles (feature_importance, counterfactual,
+feature_importance_counterfactual) and different audiences
 (technical, business, end-user), without the ``Explainer`` having to know.
 """
 

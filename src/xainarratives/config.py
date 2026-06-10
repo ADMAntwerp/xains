@@ -39,8 +39,8 @@ class ExplanationConfig(BaseModel):
     # How many top-ranked contributions the prompt will reference.
     top_k_features: int = Field(default=5, gt=0)
 
-    # Required: explain the factual prediction, the counterfactual(s), or weave both.
-    # Counterfactual and factual_counterfactual require request.counterfactuals.
+    # Required: explain via feature-importance contributions, the counterfactual(s), or weave both.
+    # Counterfactual and feature_importance_counterfactual require request.counterfactuals.
     mode: ExplanationMode
 
     run_guardrails: bool = True

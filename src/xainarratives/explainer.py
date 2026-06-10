@@ -3,7 +3,9 @@
 Responsibilities:
 
 1. Validate that the request's modality matches the schema's modality.
-2. Resolve ``factual`` / ``contrastive`` / ``counterfactual`` from config + request.
+2. Validate the configured mode (``feature_importance`` /
+   ``counterfactual`` / ``feature_importance_counterfactual``) against
+   the request.
 3. Render the prompt via the configured ``PromptTemplate``.
 4. Call the configured ``LLMProvider``.
 5. Package the result with audit metadata.
@@ -43,7 +45,7 @@ class Explainer:
         self.schema = schema
         self.llm = llm
         self.prompt_template = prompt_template
-        self.config = config if config is not None else ExplanationConfig(mode="factual")
+        self.config = config if config is not None else ExplanationConfig(mode="feature_importance")
         self.judge_llm = judge_llm if judge_llm is not None else self.llm
 
     def explain(self, request: ExplanationRequest) -> ExplanationResult:
@@ -106,11 +108,11 @@ class Explainer:
     def _check_explicit_mode(mode: ExplanationMode, *, has_cf: bool) -> None:
         if mode == "counterfactual" and not has_cf:
             raise ValueError("config.mode='counterfactual' requires request.counterfactuals.")
-        if mode == "factual_counterfactual" and not has_cf:
+        if mode == "feature_importance_counterfactual" and not has_cf:
             raise ValueError(
-                "config.mode='factual_counterfactual' requires request.counterfactuals."
+                "config.mode='feature_importance_counterfactual' requires request.counterfactuals."
             )
-        # "factual" has no prerequisites.
+        # "feature_importance" has no prerequisites.
 
     @staticmethod
     def _warn_if_counterfactual_does_not_flip(request: ExplanationRequest) -> None:

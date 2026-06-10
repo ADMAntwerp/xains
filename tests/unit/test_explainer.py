@@ -35,7 +35,7 @@ def test_tabular_round_trip(
 ) -> None:
     result = _explainer(tabular_schema, ["tabular-ok"]).explain(tabular_request)
     assert result.text == "tabular-ok"
-    assert result.mode == "factual"
+    assert result.mode == "feature_importance"
     assert result.model_name == "mock-v0"
     assert "SYSTEM:" in result.prompt and "USER:" in result.prompt
     assert result.latency_ms is not None and result.latency_ms >= 0.0
@@ -43,21 +43,21 @@ def test_tabular_round_trip(
 
 def test_text_round_trip(text_schema: DatasetSchema, text_request: TextExplanationRequest) -> None:
     result = _explainer(text_schema).explain(text_request)
-    assert result.mode == "factual"
+    assert result.mode == "feature_importance"
 
 
 def test_image_round_trip(
     image_schema: DatasetSchema, image_request: ImageExplanationRequest
 ) -> None:
     result = _explainer(image_schema).explain(image_request)
-    assert result.mode == "factual"
+    assert result.mode == "feature_importance"
 
 
 def test_graph_round_trip(
     graph_schema: DatasetSchema, graph_request: GraphExplanationRequest
 ) -> None:
     result = _explainer(graph_schema).explain(graph_request)
-    assert result.mode == "factual"
+    assert result.mode == "feature_importance"
 
 
 # ---------------------------------------------------------------- #
@@ -91,20 +91,20 @@ def test_explicit_counterfactual_without_cfs_raises(
         explainer.explain(tabular_request)
 
 
-def test_explicit_factual_counterfactual_without_counterfactuals_raises(
+def test_explicit_feature_importance_counterfactual_without_counterfactuals_raises(
     tabular_schema: DatasetSchema, tabular_request: TabularExplanationRequest
 ) -> None:
     explainer = Explainer(
         schema=tabular_schema,
         llm=MockLLMProvider(),
         prompt_template=EchoPromptTemplate(),
-        config=ExplanationConfig(mode="factual_counterfactual"),
+        config=ExplanationConfig(mode="feature_importance_counterfactual"),
     )
     with pytest.raises(ValueError, match=r"requires request\.counterfactuals"):
         explainer.explain(tabular_request)
 
 
-def test_explicit_factual_ignores_counterfactuals(
+def test_explicit_feature_importance_ignores_counterfactuals(
     tabular_schema: DatasetSchema, tabular_request: TabularExplanationRequest
 ) -> None:
     """Factual mode is always safe — extra inputs are allowed but not used."""
@@ -119,9 +119,9 @@ def test_explicit_factual_ignores_counterfactuals(
         schema=tabular_schema,
         llm=MockLLMProvider(),
         prompt_template=EchoPromptTemplate(),
-        config=ExplanationConfig(mode="factual"),
+        config=ExplanationConfig(mode="feature_importance"),
     )
-    assert explainer.explain(req).mode == "factual"
+    assert explainer.explain(req).mode == "feature_importance"
 
 
 # ---------------------------------------------------------------- #
