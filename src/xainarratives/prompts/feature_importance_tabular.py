@@ -1,9 +1,52 @@
 """FeatureImportanceTabularPromptTemplate — verbalize tabular attributions as evidence prose."""
 
+import re
+
 from xainarratives.config import ExplanationConfig
 from xainarratives.prompts.base import PromptTemplate
 from xainarratives.schema import DatasetSchema
 from xainarratives.types import ExplanationRequest, TabularExplanationRequest
+
+DEFAULT_SYSTEM_TEMPLATE = (
+    "You are explaining a model prediction for the '{target_name}' target. "
+    "Audience: {audience}. Tone: {tone}. "
+    "Keep the explanation under {max_length_words} words."
+    "\n\n"
+    "{narrative_rules}"
+)
+
+DEFAULT_USER_TEMPLATE = (
+    "Prediction: {prediction}.\nTop contributions by magnitude:\n{contributions}"
+)
+
+_BUILTIN_NAMES = frozenset(
+    {
+        "target_name",
+        "audience",
+        "tone",
+        "max_length_words",
+        "narrative_rules",
+        "prediction",
+        "contributions",
+    }
+)
+
+_PLACEHOLDER_RE = re.compile(r"\{([a-zA-Z_]\w*)\}")
+
+
+def _substitute(template: str, values: dict[str, str]) -> str:
+    """Single-pass {identifier} substitution.
+
+    Unknown identifier-shaped tokens raise ValueError. Substituted values are
+    never re-scanned (one-pass guarantee).
+    """
+    for token in _PLACEHOLDER_RE.findall(template):
+        if token not in values:
+            valid = ", ".join(sorted(values))
+            raise ValueError(
+                f"Unknown placeholder {{{token}}} in template. Valid placeholders: {valid}."
+            )
+    return _PLACEHOLDER_RE.sub(lambda m: values[m.group(1)], template)
 
 
 class FeatureImportanceTabularPromptTemplate(PromptTemplate):
@@ -12,7 +55,40 @@ class FeatureImportanceTabularPromptTemplate(PromptTemplate):
     Contributions are selected top-k by ``abs(importance)`` descending; ties
     at the k-th boundary widen the cut to include all tied contributions. The
     ``rank`` field on each contribution is ignored.
+
+    Pass ``system_template=`` / ``user_template=`` to customize the prompt
+    structure; both default to ``DEFAULT_SYSTEM_TEMPLATE`` /
+    ``DEFAULT_USER_TEMPLATE`` and reproduce the canonical layout byte-for-byte.
+
+    Built-in placeholders: ``{target_name}``, ``{audience}``, ``{tone}``,
+    ``{max_length_words}``, ``{narrative_rules}`` come from the schema and
+    ExplanationConfig; ``{prediction}`` is
+    ``schema.target.classes[predicted_class]``; ``{contributions}`` is the
+    joined per-line contribution block.
+
+    Pass ``extra_placeholders={"name": "value", ...}`` to declare additional
+    substitutions; extras may not overlap built-in names. An identifier-shaped
+    ``{token}`` in a template that is neither a built-in nor in
+    extra_placeholders raises ``ValueError`` at render time.
     """
+
+    def __init__(
+        self,
+        *,
+        system_template: str = DEFAULT_SYSTEM_TEMPLATE,
+        user_template: str = DEFAULT_USER_TEMPLATE,
+        extra_placeholders: dict[str, str] | None = None,
+    ) -> None:
+        extra = dict(extra_placeholders) if extra_placeholders else {}
+        conflicts = sorted(_BUILTIN_NAMES & extra.keys())
+        if conflicts:
+            raise ValueError(
+                f"extra_placeholders may not rebind built-in placeholder names: "
+                f"{', '.join(conflicts)}."
+            )
+        self._system_template = system_template
+        self._user_template = user_template
+        self._extra = extra
 
     def render(
         self,
@@ -49,22 +125,27 @@ class FeatureImportanceTabularPromptTemplate(PromptTemplate):
                 cut += 1
             ordered = ordered[:cut]
 
-        system_header = (
-            f"You are explaining a model prediction for the '{schema.target.name}' target. "
-            f"Audience: {config.audience}. Tone: {config.tone}. "
-            f"Keep the explanation under {config.max_length_words} words."
-        )
-        system = f"{system_header}\n\n{config.narrative_rules}"
-
-        lines = [
-            f"Prediction: {class_label}.",
-            "Top contributions by magnitude:",
-        ]
+        contribution_lines = []
         for c in ordered:
             feat = schema.feature(c.name)
             unit = f" [{feat.unit}]" if feat.unit else ""
             sign = "+" if c.importance >= 0 else "-"
-            lines.append(f"- {c.name} = {c.value}{unit}: importance={sign}{abs(c.importance):g}")
-        user = "\n".join(lines)
+            contribution_lines.append(
+                f"- {c.name} = {c.value}{unit}: importance={sign}{abs(c.importance):g}"
+            )
+        contributions = "\n".join(contribution_lines)
 
+        values: dict[str, str] = {
+            "target_name": schema.target.name,
+            "audience": config.audience,
+            "tone": config.tone,
+            "max_length_words": str(config.max_length_words),
+            "narrative_rules": config.narrative_rules,
+            "prediction": str(class_label),
+            "contributions": contributions,
+        }
+        values.update(self._extra)
+
+        system = _substitute(self._system_template, values)
+        user = _substitute(self._user_template, values)
         return system, user

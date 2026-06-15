@@ -143,6 +143,12 @@ While `0.y.z`, minor versions may contain breaking changes.
   2026; users override it by passing a custom value. Applies to all
   narrative-generating templates by convention.
 - ADR 0011: configurable narrative-generation rules.
+- `FeatureImportanceTabularPromptTemplate` now accepts `system_template`,
+  `user_template`, and `extra_placeholders` (all keyword-only, defaulted)
+  for editable prompts with `{placeholder}` substitution.
+  `DEFAULT_SYSTEM_TEMPLATE` and `DEFAULT_USER_TEMPLATE` are exported from
+  `xainarratives.prompts`. The quickstart notebook prints the rendered
+  prompt before sending. ADR 0017.
 
 ### Changed
 
