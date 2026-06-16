@@ -157,6 +157,14 @@ While `0.y.z`, minor versions may contain breaking changes.
   `DEFAULT_SYSTEM_TEMPLATE` and `DEFAULT_USER_TEMPLATE` are exported from
   `xainarratives.prompts`. The quickstart notebook prints the rendered
   prompt before sending. ADR 0017.
+- `TemplatedNarrativeGenerator` - LLM-free feature-importance
+  narratives. Verbalizes ranked contributions as prose with no LLM
+  call; method-agnostic by default (`method="SHAP"` reproduces
+  Cedro 2026's templated-baseline wording); editable lead/clause
+  templates; raw values from `request.features`; tabular-only. Slots
+  into `Explainer(generator=)` and flows through the same extraction
+  + grading path as LLM narratives (LLM-free generation, LLM-graded).
+  The shared `substitute()` helper now has its second user. ADR 0019.
 
 ### Changed
 

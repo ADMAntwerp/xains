@@ -7,7 +7,12 @@ for the architectural overview.
 
 from xainarratives.config import ExplanationConfig
 from xainarratives.explainer import Explainer
-from xainarratives.generation import GenerationResult, LLMNarrativeGenerator, NarrativeGenerator
+from xainarratives.generation import (
+    GenerationResult,
+    LLMNarrativeGenerator,
+    NarrativeGenerator,
+    TemplatedNarrativeGenerator,
+)
 from xainarratives.guardrails import FeatureClaim, GuardrailResult, NarrativeExtraction
 from xainarratives.metrics import (
     DisabledProvider,
@@ -98,6 +103,7 @@ __all__ = [
     "TabularCounterfactual",
     "TabularExplanationRequest",
     "TargetSchema",
+    "TemplatedNarrativeGenerator",
     "TextCounterfactual",
     "TextExplanationRequest",
     "TextSpec",
