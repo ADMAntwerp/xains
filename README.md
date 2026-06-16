@@ -30,7 +30,7 @@ The rendered notebook on GitHub shows committed outputs from one realization; LL
 from xainarratives import (
     DatasetSchema, FeatureSchema, TargetSchema, Modality,
     TabularExplanationRequest, TabularContribution, Prediction,
-    ExplanationConfig, Explainer,
+    ExplanationConfig, Explainer, LLMNarrativeGenerator,
 )
 from xainarratives.providers import AnthropicProvider
 from xainarratives.prompts import FeatureImportanceTabularPromptTemplate
@@ -61,11 +61,15 @@ request = TabularExplanationRequest(
     ],
 )
 
+llm = AnthropicProvider(model="claude-haiku-4-5")
 explainer = Explainer(
     schema=schema,
-    llm=AnthropicProvider(model="claude-haiku-4-5"),
-    prompt_template=FeatureImportanceTabularPromptTemplate(),
+    generator=LLMNarrativeGenerator(
+        prompt_template=FeatureImportanceTabularPromptTemplate(),
+        llm=llm,
+    ),
     config=ExplanationConfig(mode="feature_importance", audience="end_user"),
+    judge_llm=llm,  # required when extract_narrative=True
 )
 
 result = explainer.explain(request)

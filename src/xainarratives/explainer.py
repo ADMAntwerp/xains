@@ -6,21 +6,21 @@ Responsibilities:
 2. Validate the configured mode (``feature_importance`` /
    ``counterfactual`` / ``feature_importance_counterfactual``) against
    the request.
-3. Render the prompt via the configured ``PromptTemplate``.
-4. Call the configured ``LLMProvider``.
+3. Generate the narrative via the configured ``NarrativeGenerator``.
+4. Optionally run judge-based narrative extraction on the generated
+   text (requires ``judge_llm``).
 5. Package the result with audit metadata.
 
 Not in v0: caching, retries, streaming, batch, eval pipeline.
 Each gets its own PR and its own ADR.
 """
 
-import time
 import warnings
 
 from xainarratives.config import ExplanationConfig
-from xainarratives.guardrails import class_name_mentioned, extract_narrative_claims
+from xainarratives.generation.base import NarrativeGenerator
+from xainarratives.guardrails import extract_narrative_claims
 from xainarratives.guardrails.types import GuardrailResult, NarrativeExtraction
-from xainarratives.prompts.base import PromptTemplate
 from xainarratives.providers.base import LLMProvider
 from xainarratives.schema import DatasetSchema
 from xainarratives.types import (
@@ -37,52 +37,62 @@ class Explainer:
     def __init__(
         self,
         schema: DatasetSchema,
-        llm: LLMProvider,
-        prompt_template: PromptTemplate,
+        generator: NarrativeGenerator,
         config: ExplanationConfig | None = None,
         judge_llm: LLMProvider | None = None,
     ) -> None:
         self.schema = schema
-        self.llm = llm
-        self.prompt_template = prompt_template
+        self.generator = generator
         self.config = config if config is not None else ExplanationConfig(mode="feature_importance")
-        self.judge_llm = judge_llm if judge_llm is not None else self.llm
+        # No fallback to a generator-held LLM; explain() validates when
+        # extraction is requested.
+        self.judge_llm = judge_llm
 
     def explain(self, request: ExplanationRequest) -> ExplanationResult:
         self._validate_modality(request)
         self._warn_if_counterfactual_does_not_flip(request)
-
         mode = self._validate_mode(request)
-        system, user = self.prompt_template.render(request, self.schema, self.config)
 
-        start = time.perf_counter()
-        response = self.llm.generate(system, user)
-        latency_ms = (time.perf_counter() - start) * 1000.0
+        gen = self.generator.generate(request, self.schema, self.config)
 
-        guardrails: list[GuardrailResult] | None = None
+        # Defensive copy so we can append the optional judge failure without
+        # mutating the GenerationResult's internal list.
+        guardrails: list[GuardrailResult] | None = (
+            list(gen.guardrails) if gen.guardrails is not None else None
+        )
         narrative_extraction: NarrativeExtraction | None = None
         guardrail_tokens_used: dict[str, int] | None = None
 
-        if self.config.run_guardrails:
-            guardrails = [class_name_mentioned(response.text, self.schema, request.prediction)]
-            if self.config.extract_narrative and isinstance(request, TabularExplanationRequest):
-                extraction, judge_response, failure = extract_narrative_claims(
-                    response.text, request, self.schema, self.judge_llm
+        if (
+            self.config.run_guardrails
+            and self.config.extract_narrative
+            and isinstance(request, TabularExplanationRequest)
+        ):
+            if self.judge_llm is None:
+                raise ValueError(
+                    "extract_narrative=True requires judge_llm to be passed "
+                    "to Explainer(...). Pass an LLMProvider as judge_llm, or "
+                    "set ExplanationConfig(extract_narrative=False)."
                 )
-                guardrail_tokens_used = judge_response.tokens_used
-                if extraction is not None:
-                    narrative_extraction = extraction
-                if failure is not None:
-                    guardrails.append(failure)
+            extraction, judge_response, failure = extract_narrative_claims(
+                gen.text, request, self.schema, self.judge_llm
+            )
+            guardrail_tokens_used = judge_response.tokens_used
+            if extraction is not None:
+                narrative_extraction = extraction
+            if failure is not None:
+                if guardrails is None:
+                    guardrails = []
+                guardrails.append(failure)
 
         return ExplanationResult(
-            text=response.text,
+            text=gen.text,
             mode=mode,
-            prompt=f"SYSTEM:\n{system}\n\nUSER:\n{user}",
-            raw_llm_response=response.text,
-            model_name=response.model_name,
-            tokens_used=response.tokens_used,
-            latency_ms=latency_ms,
+            prompt=gen.prompt,
+            raw_llm_response=gen.raw_llm_response,
+            model_name=gen.model_name,
+            tokens_used=gen.tokens_used,
+            latency_ms=gen.latency_ms,
             guardrails=guardrails,
             narrative_extraction=narrative_extraction,
             guardrail_tokens_used=guardrail_tokens_used,

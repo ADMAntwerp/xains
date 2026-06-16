@@ -19,6 +19,7 @@ from xainarratives import (
     ExplanationConfig,
     ExplanationResult,
     FeatureSchema,
+    LLMNarrativeGenerator,
     Modality,
     Prediction,
     TabularContribution,
@@ -147,9 +148,9 @@ def test_guardrails_disabled_sets_all_three_fields_none(
     config = ExplanationConfig(mode="feature_importance", run_guardrails=False)
     expl = Explainer(
         schema=tab_schema,
-        llm=llm,
-        prompt_template=_FakePromptTemplate(),
+        generator=LLMNarrativeGenerator(prompt_template=_FakePromptTemplate(), llm=llm),
         config=config,
+        judge_llm=llm,
     )
     result = expl.explain(tab_request)
     assert isinstance(result, ExplanationResult)
@@ -165,9 +166,9 @@ def test_rule_based_run_by_default(
     config = ExplanationConfig(mode="feature_importance", extract_narrative=False)
     expl = Explainer(
         schema=tab_schema,
-        llm=llm,
-        prompt_template=_FakePromptTemplate(),
+        generator=LLMNarrativeGenerator(prompt_template=_FakePromptTemplate(), llm=llm),
         config=config,
+        judge_llm=llm,
     )
     result = expl.explain(tab_request)
     assert result.guardrails is not None
@@ -181,7 +182,11 @@ def test_extraction_runs_by_default_for_tabular(
     tab_schema: DatasetSchema, tab_request: TabularExplanationRequest
 ) -> None:
     llm = MockLLMProvider(responses=[NARRATIVE, _valid_extraction_json()], model_name="gen")
-    expl = Explainer(schema=tab_schema, llm=llm, prompt_template=_FakePromptTemplate())
+    expl = Explainer(
+        schema=tab_schema,
+        generator=LLMNarrativeGenerator(prompt_template=_FakePromptTemplate(), llm=llm),
+        judge_llm=llm,
+    )
     result = expl.explain(tab_request)
     assert isinstance(result.narrative_extraction, NarrativeExtraction)
     assert "dti" in result.narrative_extraction.features
@@ -194,9 +199,9 @@ def test_extraction_disabled_runs_only_rule_based(
     config = ExplanationConfig(mode="feature_importance", extract_narrative=False)
     expl = Explainer(
         schema=tab_schema,
-        llm=llm,
-        prompt_template=_FakePromptTemplate(),
+        generator=LLMNarrativeGenerator(prompt_template=_FakePromptTemplate(), llm=llm),
         config=config,
+        judge_llm=llm,
     )
     expl.explain(tab_request)
     assert llm._index == 1
@@ -209,7 +214,11 @@ def test_judge_llm_defaults_to_generator_llm_when_not_supplied(
     tab_schema: DatasetSchema, tab_request: TabularExplanationRequest
 ) -> None:
     llm = MockLLMProvider(responses=[NARRATIVE, _valid_extraction_json()], model_name="gen")
-    expl = Explainer(schema=tab_schema, llm=llm, prompt_template=_FakePromptTemplate())
+    expl = Explainer(
+        schema=tab_schema,
+        generator=LLMNarrativeGenerator(prompt_template=_FakePromptTemplate(), llm=llm),
+        judge_llm=llm,
+    )
     result = expl.explain(tab_request)
     assert llm._index == 2
     assert result.narrative_extraction is not None
@@ -222,8 +231,7 @@ def test_judge_llm_uses_supplied_provider_when_set(
     judge = MockLLMProvider(responses=[_valid_extraction_json()], model_name="judge")
     expl = Explainer(
         schema=tab_schema,
-        llm=gen,
-        prompt_template=_FakePromptTemplate(),
+        generator=LLMNarrativeGenerator(prompt_template=_FakePromptTemplate(), llm=gen),
         judge_llm=judge,
     )
     result = expl.explain(tab_request)
@@ -239,7 +247,11 @@ def test_non_tabular_request_skips_rule1_and_extraction_runs_rule2(
     text_schema: DatasetSchema, text_request: TextExplanationRequest
 ) -> None:
     llm = MockLLMProvider(responses=["This review is Positive overall."], model_name="gen")
-    expl = Explainer(schema=text_schema, llm=llm, prompt_template=_FakePromptTemplate())
+    expl = Explainer(
+        schema=text_schema,
+        generator=LLMNarrativeGenerator(prompt_template=_FakePromptTemplate(), llm=llm),
+        judge_llm=llm,
+    )
     result = expl.explain(text_request)
     assert result.guardrails is not None
     assert len(result.guardrails) == 1
@@ -257,7 +269,11 @@ def test_generator_tokens_in_tokens_used_only(
     gen_tokens = {"input": 10, "output": 20, "total": 30}
     judge_tokens = {"input": 100, "output": 200, "total": 300}
     llm = _TokenMock([(NARRATIVE, gen_tokens), (_valid_extraction_json(), judge_tokens)])
-    expl = Explainer(schema=tab_schema, llm=llm, prompt_template=_FakePromptTemplate())
+    expl = Explainer(
+        schema=tab_schema,
+        generator=LLMNarrativeGenerator(prompt_template=_FakePromptTemplate(), llm=llm),
+        judge_llm=llm,
+    )
     result = expl.explain(tab_request)
     assert result.tokens_used == gen_tokens
     assert result.tokens_used != judge_tokens
@@ -269,7 +285,11 @@ def test_extraction_tokens_in_guardrail_tokens_used_only(
     gen_tokens = {"input": 10, "output": 20, "total": 30}
     judge_tokens = {"input": 100, "output": 200, "total": 300}
     llm = _TokenMock([(NARRATIVE, gen_tokens), (_valid_extraction_json(), judge_tokens)])
-    expl = Explainer(schema=tab_schema, llm=llm, prompt_template=_FakePromptTemplate())
+    expl = Explainer(
+        schema=tab_schema,
+        generator=LLMNarrativeGenerator(prompt_template=_FakePromptTemplate(), llm=llm),
+        judge_llm=llm,
+    )
     result = expl.explain(tab_request)
     assert result.guardrail_tokens_used == judge_tokens
     assert result.guardrail_tokens_used != gen_tokens
@@ -281,7 +301,11 @@ def test_extraction_parse_failure_still_records_tokens(
     gen_tokens = {"input": 10, "output": 20, "total": 30}
     judge_tokens = {"input": 100, "output": 200, "total": 300}
     llm = _TokenMock([(NARRATIVE, gen_tokens), ("not json at all", judge_tokens)])
-    expl = Explainer(schema=tab_schema, llm=llm, prompt_template=_FakePromptTemplate())
+    expl = Explainer(
+        schema=tab_schema,
+        generator=LLMNarrativeGenerator(prompt_template=_FakePromptTemplate(), llm=llm),
+        judge_llm=llm,
+    )
     result = expl.explain(tab_request)
     assert result.narrative_extraction is None
     assert result.guardrail_tokens_used == judge_tokens
@@ -298,7 +322,11 @@ def test_tokens_used_schema_conforms_to_adr_0005(
     gen_tokens = {"input": 10, "output": 20, "total": 30}
     judge_tokens = {"input": 100, "output": 200, "total": 300}
     llm = _TokenMock([(NARRATIVE, gen_tokens), (_valid_extraction_json(), judge_tokens)])
-    expl = Explainer(schema=tab_schema, llm=llm, prompt_template=_FakePromptTemplate())
+    expl = Explainer(
+        schema=tab_schema,
+        generator=LLMNarrativeGenerator(prompt_template=_FakePromptTemplate(), llm=llm),
+        judge_llm=llm,
+    )
     result = expl.explain(tab_request)
     assert result.tokens_used is not None
     assert set(result.tokens_used.keys()) == {"input", "output", "total"}

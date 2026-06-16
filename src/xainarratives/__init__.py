@@ -7,6 +7,7 @@ for the architectural overview.
 
 from xainarratives.config import ExplanationConfig
 from xainarratives.explainer import Explainer
+from xainarratives.generation import GenerationResult, LLMNarrativeGenerator, NarrativeGenerator
 from xainarratives.guardrails import FeatureClaim, GuardrailResult, NarrativeExtraction
 from xainarratives.metrics import (
     DisabledProvider,
@@ -74,6 +75,7 @@ __all__ = [
     "ExtractionGrades",
     "FeatureClaim",
     "FeatureSchema",
+    "GenerationResult",
     "GraphCounterfactual",
     "GraphExplanationRequest",
     "GraphSpec",
@@ -82,8 +84,10 @@ __all__ = [
     "ImageCounterfactual",
     "ImageExplanationRequest",
     "ImageSpec",
+    "LLMNarrativeGenerator",
     "Modality",
     "NarrativeExtraction",
+    "NarrativeGenerator",
     "NarrativityGrades",
     "NodeContribution",
     "OpenAICompatibleEchoProvider",

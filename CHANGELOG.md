@@ -58,6 +58,14 @@ While `0.y.z`, minor versions may contain breaking changes.
   (`factual_class` local var + warning prose) is deliberately preserved
   as the now-unambiguous "input datapoint" sense. ADR 0016 (supersedes
   the mode naming in ADR 0012).
+- `Explainer` now takes `generator=` (a `NarrativeGenerator`:
+  `LLMNarrativeGenerator` or a future templated generator) instead of
+  `prompt_template=` / `llm=`. `judge_llm` is required when
+  `extract_narrative=True` — the silent `self.llm` fallback is removed;
+  `explain()` raises `ValueError` otherwise.
+  `ExplanationResult.{prompt, model_name, raw_llm_response}` widened
+  to `str | None` (templated generators produce no LLM metadata).
+  ADR 0018.
 
 ### Added
 

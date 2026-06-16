@@ -8,6 +8,7 @@ from xainarratives import (
     ExplanationConfig,
     GraphExplanationRequest,
     ImageExplanationRequest,
+    LLMNarrativeGenerator,
     Prediction,
     TabularContribution,
     TabularCounterfactual,
@@ -23,10 +24,11 @@ from xainarratives.providers import MockLLMProvider
 
 
 def _explainer(schema: DatasetSchema, responses: list[str] | None = None) -> Explainer:
+    llm = MockLLMProvider(responses=responses or ["ok"])
     return Explainer(
         schema=schema,
-        llm=MockLLMProvider(responses=responses or ["ok"]),
-        prompt_template=EchoPromptTemplate(),
+        generator=LLMNarrativeGenerator(prompt_template=EchoPromptTemplate(), llm=llm),
+        judge_llm=llm,
     )
 
 
@@ -37,7 +39,7 @@ def test_tabular_round_trip(
     assert result.text == "tabular-ok"
     assert result.mode == "feature_importance"
     assert result.model_name == "mock-v0"
-    assert "SYSTEM:" in result.prompt and "USER:" in result.prompt
+    assert result.prompt is not None and "SYSTEM:" in result.prompt and "USER:" in result.prompt
     assert result.latency_ms is not None and result.latency_ms >= 0.0
 
 
@@ -81,11 +83,12 @@ def test_modality_mismatch_raises(
 def test_explicit_counterfactual_without_cfs_raises(
     tabular_schema: DatasetSchema, tabular_request: TabularExplanationRequest
 ) -> None:
+    llm = MockLLMProvider()
     explainer = Explainer(
         schema=tabular_schema,
-        llm=MockLLMProvider(),
-        prompt_template=EchoPromptTemplate(),
+        generator=LLMNarrativeGenerator(prompt_template=EchoPromptTemplate(), llm=llm),
         config=ExplanationConfig(mode="counterfactual"),
+        judge_llm=llm,
     )
     with pytest.raises(ValueError, match=r"requires request\.counterfactuals"):
         explainer.explain(tabular_request)
@@ -94,11 +97,12 @@ def test_explicit_counterfactual_without_cfs_raises(
 def test_explicit_feature_importance_counterfactual_without_counterfactuals_raises(
     tabular_schema: DatasetSchema, tabular_request: TabularExplanationRequest
 ) -> None:
+    llm = MockLLMProvider()
     explainer = Explainer(
         schema=tabular_schema,
-        llm=MockLLMProvider(),
-        prompt_template=EchoPromptTemplate(),
+        generator=LLMNarrativeGenerator(prompt_template=EchoPromptTemplate(), llm=llm),
         config=ExplanationConfig(mode="feature_importance_counterfactual"),
+        judge_llm=llm,
     )
     with pytest.raises(ValueError, match=r"requires request\.counterfactuals"):
         explainer.explain(tabular_request)
@@ -115,11 +119,12 @@ def test_explicit_feature_importance_ignores_counterfactuals(
             ]
         }
     )
+    llm = MockLLMProvider()
     explainer = Explainer(
         schema=tabular_schema,
-        llm=MockLLMProvider(),
-        prompt_template=EchoPromptTemplate(),
+        generator=LLMNarrativeGenerator(prompt_template=EchoPromptTemplate(), llm=llm),
         config=ExplanationConfig(mode="feature_importance"),
+        judge_llm=llm,
     )
     assert explainer.explain(req).mode == "feature_importance"
 
@@ -157,3 +162,48 @@ def test_cf_flipping_class_does_not_warn(tabular_schema: DatasetSchema) -> None:
     with warnings.catch_warnings():
         warnings.simplefilter("error")  # any warning becomes an exception
         _explainer(tabular_schema).explain(req)
+
+
+# ---------------------------------------------------------------- #
+# Phase-1 behavior change: judge_llm-None fail-fast                #
+# ---------------------------------------------------------------- #
+
+
+def test_explain_raises_when_extract_narrative_true_and_judge_llm_none(
+    tabular_schema: DatasetSchema, tabular_request: TabularExplanationRequest
+) -> None:
+    """``config.extract_narrative=True`` with ``judge_llm=None`` must raise a
+    clear ``ValueError`` — replacing the silent ``judge_llm = self.llm``
+    fallback present in the pre-refactor Explainer.
+
+    NOTE — TEST-MIGRATION EXCEPTION. When the NarrativeGenerator refactor
+    lands, this test's construction shape migrates to the new signature:
+
+        Explainer(
+            schema=tabular_schema,
+            generator=LLMNarrativeGenerator(
+                prompt_template=EchoPromptTemplate(),
+                llm=MockLLMProvider(responses=["the applicant Defaulted"]),
+            ),
+            # judge_llm deliberately omitted to provoke the new ValueError
+        )
+
+    The ``judge_llm`` omission is INTENTIONAL — it is what triggers the
+    new error. The standard 17-site migration rule (always preserve the
+    fallback by adding ``judge_llm=L`` explicitly) does NOT apply to this
+    test.
+
+    Pre-refactor red state: this test fails with 'DID NOT RAISE ValueError'
+    because today's code silently falls back to ``self.llm`` as the judge
+    and ``explain()`` completes successfully.
+    """
+    explainer = Explainer(
+        schema=tabular_schema,
+        generator=LLMNarrativeGenerator(
+            prompt_template=EchoPromptTemplate(),
+            llm=MockLLMProvider(responses=["the applicant Defaulted"]),
+        ),
+        # judge_llm deliberately omitted to provoke the new ValueError
+    )
+    with pytest.raises(ValueError, match=r"extract_narrative=True requires judge_llm"):
+        explainer.explain(tabular_request)

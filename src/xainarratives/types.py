@@ -200,9 +200,9 @@ class ExplanationResult(BaseModel):
 
     text: str
     mode: ExplanationMode
-    prompt: str  # the full rendered prompt actually sent to the LLM
-    raw_llm_response: str
-    model_name: str
+    prompt: str | None  # the rendered prompt sent to the LLM; None for non-LLM generators
+    raw_llm_response: str | None
+    model_name: str | None
     tokens_used: dict[str, int] | None = None
     latency_ms: float | None = Field(default=None, ge=0.0)
     guardrails: "list[GuardrailResult] | None" = None
