@@ -1,7 +1,6 @@
 """FeatureImportanceTabularPromptTemplate — verbalize tabular attributions as evidence prose."""
 
-import re
-
+from xainarratives._substitution import substitute
 from xainarratives.config import ExplanationConfig
 from xainarratives.prompts.base import PromptTemplate
 from xainarratives.schema import DatasetSchema
@@ -30,23 +29,6 @@ _BUILTIN_NAMES = frozenset(
         "contributions",
     }
 )
-
-_PLACEHOLDER_RE = re.compile(r"\{([a-zA-Z_]\w*)\}")
-
-
-def _substitute(template: str, values: dict[str, str]) -> str:
-    """Single-pass {identifier} substitution.
-
-    Unknown identifier-shaped tokens raise ValueError. Substituted values are
-    never re-scanned (one-pass guarantee).
-    """
-    for token in _PLACEHOLDER_RE.findall(template):
-        if token not in values:
-            valid = ", ".join(sorted(values))
-            raise ValueError(
-                f"Unknown placeholder {{{token}}} in template. Valid placeholders: {valid}."
-            )
-    return _PLACEHOLDER_RE.sub(lambda m: values[m.group(1)], template)
 
 
 class FeatureImportanceTabularPromptTemplate(PromptTemplate):
@@ -146,6 +128,6 @@ class FeatureImportanceTabularPromptTemplate(PromptTemplate):
         }
         values.update(self._extra)
 
-        system = _substitute(self._system_template, values)
-        user = _substitute(self._user_template, values)
+        system = substitute(self._system_template, values)
+        user = substitute(self._user_template, values)
         return system, user
