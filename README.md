@@ -31,8 +31,8 @@ from xainarratives import (
     DatasetSchema, FeatureSchema, TargetSchema, Modality,
     TabularExplanationRequest, TabularContribution, Prediction,
     ExplanationConfig, Explainer, LLMNarrativeGenerator,
+    AnthropicProvider,
 )
-from xainarratives.providers import AnthropicProvider
 from xainarratives.prompts import FeatureImportanceTabularPromptTemplate
 
 schema = DatasetSchema(
@@ -77,6 +77,35 @@ print(result.text)
 ```
 
 See `docs/design.md` for the full design and `docs/decisions/` for recorded architecture decisions.
+
+## Choosing a model
+
+Any `LLMProvider` drops into `LLMNarrativeGenerator(llm=...)` - pick the provider for the model you want:
+
+```python
+from xainarratives import (
+    AnthropicProvider, OpenAIProvider, OpenRouterProvider, OpenAICompatibleProvider,
+)
+
+# Anthropic (reads ANTHROPIC_API_KEY)
+llm = AnthropicProvider(model="claude-haiku-4-5", max_tokens=512)
+
+# OpenAI (reads OPENAI_API_KEY)
+llm = OpenAIProvider(model="gpt-4o-mini", max_tokens=512)
+
+# OpenRouter - Llama, and many others (reads OPENROUTER_API_KEY)
+llm = OpenRouterProvider(model="meta-llama/llama-3.3-70b-instruct", max_tokens=512)
+
+# Any OpenAI-compatible endpoint (Together, Groq, vLLM, ...) - set base_url + the env var to read
+llm = OpenAICompatibleProvider(
+    base_url="https://api.together.xyz/v1",
+    api_key_env_var="TOGETHER_API_KEY",
+    model="meta-llama/Llama-3.3-70B-Instruct-Turbo",
+    max_tokens=512,
+)
+```
+
+Each reads its API key from the named env var (or pass `api_key=` explicitly); drop any of them into `LLMNarrativeGenerator(llm=...)` exactly as the Minimal example does.
 
 ## License
 

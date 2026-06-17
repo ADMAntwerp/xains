@@ -37,6 +37,15 @@ from xainarratives.metrics import (
     value_faithfulness,
     vcpr,
 )
+from xainarratives.providers import (
+    AnthropicProvider,
+    LLMProvider,
+    LLMResponse,
+    MockLLMProvider,
+    OpenAICompatibleProvider,
+    OpenAIProvider,
+    OpenRouterProvider,
+)
 from xainarratives.schema import (
     DatasetSchema,
     FeatureSchema,
@@ -69,6 +78,7 @@ from xainarratives.types import (
 __version__ = "0.0.1"
 
 __all__ = [
+    "AnthropicProvider",
     "DatasetSchema",
     "DisabledProvider",
     "EdgeContribution",
@@ -90,12 +100,18 @@ __all__ = [
     "ImageExplanationRequest",
     "ImageSpec",
     "LLMNarrativeGenerator",
+    "LLMProvider",
+    "LLMResponse",
+    "MockLLMProvider",
     "Modality",
     "NarrativeExtraction",
     "NarrativeGenerator",
     "NarrativityGrades",
     "NodeContribution",
     "OpenAICompatibleEchoProvider",
+    "OpenAICompatibleProvider",
+    "OpenAIProvider",
+    "OpenRouterProvider",
     "PerplexityProvider",
     "Prediction",
     "RegionContribution",

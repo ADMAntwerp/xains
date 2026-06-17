@@ -165,6 +165,16 @@ While `0.y.z`, minor versions may contain breaking changes.
   into `Explainer(generator=)` and flows through the same extraction
   + grading path as LLM narratives (LLM-free generation, LLM-graded).
   The shared `substitute()` helper now has its second user. ADR 0019.
+- OpenAI and OpenRouter narrative-generation providers:
+  `OpenAIProvider` (reads `OPENAI_API_KEY`) and `OpenRouterProvider`
+  (reads `OPENROUTER_API_KEY`, optional `HTTP-Referer`/`X-Title`
+  headers), both thin presets over a new public
+  `OpenAICompatibleProvider` base usable directly for any
+  OpenAI-compatible endpoint (Together, Groq, vLLM, ...). Eager key
+  resolution, lazy SDK import. New `openai` pip extra. All providers
+  now top-level importable: `from xainarratives import
+  AnthropicProvider, OpenAIProvider, OpenRouterProvider,
+  OpenAICompatibleProvider, ...`. ADR 0020.
 
 ### Changed
 
