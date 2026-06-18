@@ -4,7 +4,7 @@ import sys
 
 import pytest
 
-from xainarratives.metrics._internal.tokenize import (
+from xain.metrics._internal.tokenize import (
     bigrams,
     count_verbs,
     pos_tags,
@@ -109,7 +109,7 @@ def test_split_sentences_raises_when_nltk_missing(
 ) -> None:
     """Forcing ``import nltk`` to fail yields a clear ImportError pointing at the extra."""
     monkeypatch.setitem(sys.modules, "nltk", None)
-    with pytest.raises(ImportError, match=r'pip install "xainarratives\[narrativity\]"'):
+    with pytest.raises(ImportError, match=r'pip install "xain\[narrativity\]"'):
         split_sentences("Some text. Some more.")
 
 
@@ -117,5 +117,5 @@ def test_pos_tags_raises_when_nltk_missing(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setitem(sys.modules, "nltk", None)
-    with pytest.raises(ImportError, match=r'pip install "xainarratives\[narrativity\]"'):
+    with pytest.raises(ImportError, match=r'pip install "xain\[narrativity\]"'):
         pos_tags(["the", "dog"])

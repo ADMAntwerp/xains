@@ -1,4 +1,4 @@
-# xainarratives — Design
+# xain — Design
 
 This document captures the architecture and the reasoning behind it. It's the
 single source of truth for "why is it shaped this way?" questions. Short-form
@@ -119,7 +119,7 @@ Adapter pattern. Named by **input shape**, not by upstream library:
 - `from_graph_importance(...)` → graph (node mask + edge mask).
 - `from_counterfactual_set(...)` → DiCE / Alibi / manual counterfactual bundles.
 
-Each adapter lives in its own module in `xainarratives/integrations/` and
+Each adapter lives in its own module in `xain/integrations/` and
 imports its upstream dep lazily with a clear `ImportError` if missing.
 
 ## 10. Evaluation (Planned, Not in v0)

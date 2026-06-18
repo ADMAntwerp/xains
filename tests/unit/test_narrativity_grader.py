@@ -5,7 +5,7 @@ import sys
 import pytest
 from pydantic import ValidationError
 
-from xainarratives import NarrativityGrades, grade_narrativity
+from xain import NarrativityGrades, grade_narrativity
 
 SAMPLE_TEXT = (
     "The applicant was predicted to default. "

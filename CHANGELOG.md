@@ -66,6 +66,10 @@ While `0.y.z`, minor versions may contain breaking changes.
   `ExplanationResult.{prompt, model_name, raw_llm_response}` widened
   to `str | None` (templated generators produce no LLM metadata).
   ADR 0018.
+- Renamed the package from `xainarratives` to `xain`.
+  `from xainarratives import ...` becomes `from xain import ...`;
+  `pip install "xainarratives[extra]"` becomes
+  `pip install "xain[extra]"`. ADR 0021.
 
 ### Added
 

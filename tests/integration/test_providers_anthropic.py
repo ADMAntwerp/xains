@@ -14,7 +14,7 @@ import os
 
 import pytest
 
-from xainarratives.providers import AnthropicProvider, LLMResponse
+from xain.providers import AnthropicProvider, LLMResponse
 
 
 @pytest.mark.vcr

@@ -9,7 +9,7 @@ import sys
 
 import pytest
 
-from xainarratives.providers import AnthropicProvider, LLMProvider
+from xain.providers import AnthropicProvider, LLMProvider
 
 
 def test_implements_protocol() -> None:
@@ -28,5 +28,5 @@ def test_missing_anthropic_raises_importerror(monkeypatch: pytest.MonkeyPatch) -
 
     p = AnthropicProvider(model="claude-haiku-4-5", max_tokens=64)
 
-    with pytest.raises(ImportError, match=r'pip install "xainarratives\[anthropic\]"'):
+    with pytest.raises(ImportError, match=r'pip install "xain\[anthropic\]"'):
         p.generate("sys", "user")

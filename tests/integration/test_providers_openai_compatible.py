@@ -18,8 +18,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from xainarratives.providers import LLMProvider, LLMResponse
-from xainarratives.providers.openai_compatible import (
+from xain.providers import LLMProvider, LLMResponse
+from xain.providers.openai_compatible import (
     OpenAICompatibleProvider,
     OpenAIProvider,
     OpenRouterProvider,
@@ -230,7 +230,7 @@ def test_missing_openai_sdk_raises_importerror_with_install_hint(
     provider = OpenAICompatibleProvider(base_url=None, model="x", max_tokens=10)
     # Mask the SDK so the lazy import inside generate() fails.
     monkeypatch.setitem(sys.modules, "openai", None)
-    with pytest.raises(ImportError, match=r'pip install "xainarratives\[openai\]"'):
+    with pytest.raises(ImportError, match=r'pip install "xain\[openai\]"'):
         provider.generate("s", "u")
 
 

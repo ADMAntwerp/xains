@@ -2,7 +2,7 @@
 
 import pytest
 
-from xainarratives import (
+from xain import (
     DatasetSchema,
     EdgeContribution,
     FeatureSchema,

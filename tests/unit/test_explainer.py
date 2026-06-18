@@ -1,8 +1,8 @@
-"""Tests for xainarratives.explainer."""
+"""Tests for xain.explainer."""
 
 import pytest
 
-from xainarratives import (
+from xain import (
     DatasetSchema,
     Explainer,
     ExplanationConfig,
@@ -15,8 +15,8 @@ from xainarratives import (
     TabularExplanationRequest,
     TextExplanationRequest,
 )
-from xainarratives.prompts import EchoPromptTemplate
-from xainarratives.providers import MockLLMProvider
+from xain.prompts import EchoPromptTemplate
+from xain.providers import MockLLMProvider
 
 # ---------------------------------------------------------------- #
 # End-to-end round-trip per modality                               #

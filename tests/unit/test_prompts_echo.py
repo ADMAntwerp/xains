@@ -1,8 +1,8 @@
-"""Tests for xainarratives.prompts.echo."""
+"""Tests for xain.prompts.echo."""
 
 import json
 
-from xainarratives import (
+from xain import (
     DatasetSchema,
     ExplanationConfig,
     GraphExplanationRequest,
@@ -10,7 +10,7 @@ from xainarratives import (
     TabularExplanationRequest,
     TextExplanationRequest,
 )
-from xainarratives.prompts import EchoPromptTemplate
+from xain.prompts import EchoPromptTemplate
 
 
 def _render_and_parse(

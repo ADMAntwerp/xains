@@ -2,7 +2,7 @@
 
 import pytest  # noqa: F401  (imported for pytest discovery only)
 
-from xainarratives.metrics._internal.lexicons import (
+from xain.metrics._internal.lexicons import (
     count_phrase_occurrences,
     load_cause_effect_markers,
     load_connectives,

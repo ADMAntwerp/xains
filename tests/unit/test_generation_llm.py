@@ -6,14 +6,14 @@ existing 283 tests (whose Explainer construction sites get migrated
 to the new signature; their assertions stay byte-identical).
 """
 
-from xainarratives import (
+from xain import (
     DatasetSchema,
     ExplanationConfig,
     TabularExplanationRequest,
 )
-from xainarratives.generation import GenerationResult, LLMNarrativeGenerator
-from xainarratives.prompts import EchoPromptTemplate
-from xainarratives.providers import MockLLMProvider
+from xain.generation import GenerationResult, LLMNarrativeGenerator
+from xain.prompts import EchoPromptTemplate
+from xain.providers import MockLLMProvider
 
 
 def test_llm_generator_returns_populated_generation_result(

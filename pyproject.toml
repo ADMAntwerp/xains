@@ -3,13 +3,16 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "xainarratives"
+name = "xain"
 version = "0.0.1"
 description = "Natural-language verbalization of ML model predictions from pre-computed attributions."
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.11"
-authors = [{ name = "xainarratives authors" }]
+authors = [
+    { name = "Mateusz Cedro", email = "mateusz.cedro@uantwerpen.be" },
+    { name = "David Martens", email = "david.martens@uantwerpen.be" },
+]
 keywords = ["xai", "explainability", "nlg", "shap", "llm"]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -76,14 +79,14 @@ notebook = [
 ]
 
 [project.urls]
-Repository = "https://github.com/xainarratives/xainarratives"
-Issues = "https://github.com/xainarratives/xainarratives/issues"
+Repository = "https://github.com/ADMAntwerp/xain"
+Issues = "https://github.com/ADMAntwerp/xain/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/xainarratives"]
+packages = ["src/xain"]
 
 [tool.hatch.build.targets.sdist]
-include = ["src/xainarratives", "README.md", "LICENSE", "CHANGELOG.md"]
+include = ["src/xain", "README.md", "LICENSE", "CHANGELOG.md"]
 
 # ---------- Ruff ----------
 [tool.ruff]
@@ -110,7 +113,7 @@ ignore = []
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["N802"]  # allow snake_case mirrors of CamelCase in tests
-"src/xainarratives/config.py" = ["E501"]  # DEFAULT_NARRATIVE_RULES is a verbatim multi-line paper-quote
+"src/xain/config.py" = ["E501"]  # DEFAULT_NARRATIVE_RULES is a verbatim multi-line paper-quote
 
 [tool.ruff.format]
 quote-style = "double"
@@ -169,7 +172,7 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["src/xainarratives"]
+source = ["src/xain"]
 branch = true
 
 [tool.coverage.report]
