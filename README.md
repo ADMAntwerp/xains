@@ -2,10 +2,10 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-brightgreen.svg)](https://opensource.org/licenses/MIT)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org)
-
-<!-- TODO (add as each service comes online for ADMAntwerp/xains):
 [![PyPI version](https://img.shields.io/pypi/v/xains.svg)](https://pypi.org/project/xains/)
 [![Tests](https://github.com/ADMAntwerp/xains/actions/workflows/ci.yml/badge.svg)](https://github.com/ADMAntwerp/xains/actions/workflows/ci.yml)
+
+<!-- TODO (add as each service comes online for ADMAntwerp/xains):
 [![codecov](https://codecov.io/gh/ADMAntwerp/xains/branch/master/graph/badge.svg)](https://codecov.io/gh/ADMAntwerp/xains)
 [![Read the Docs](https://readthedocs.org/projects/xains/badge/?version=latest)](https://xains.readthedocs.io/en/latest/)
 -->
