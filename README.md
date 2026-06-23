@@ -88,7 +88,7 @@ weighing on your financial stability.
 
 ### Scoring the narrative
 
-A narrative is only useful if it is faithful to the attributions and reads well. xains scores both. `grade_extraction` checks the claims the narrative makes against the input attributions - sign, value, and rank fidelity, coverage, hallucination count, and readability (perplexity is added when a perplexity provider is supplied):
+A narrative is only useful if it is faithful to the attributions and reads well. xains scores both. `grade_extraction` checks the claims the narrative makes against the input attributions - sign, value, and rank fidelity, coverage, hallucination count, and readability:
 
 ```python
 grades = xains.grade_extraction(
@@ -103,7 +103,7 @@ print(grades)
 
 ```text
 sign_faithfulness=1.0 value_faithfulness=1.0 rank_correlation=1.0 coverage=1.0
-hallucination_count=0 readability=30.09 perplexity=None prompt_version='2'
+hallucination_count=0 readability=30.09 prompt_version='2'
 ```
 
 `grade_narrativity` scores how well the text reads as a narrative, using the metrics from Cedro & Martens 2026. It needs a perplexity provider (any OpenAI-compatible endpoint that returns logprobs):

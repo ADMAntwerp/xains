@@ -1,4 +1,4 @@
-"""Grader: integrates all metrics into a single ExtractionGrades record."""
+"""Grader: integrates verbalization-fidelity metrics into ExtractionGrades."""
 
 from pydantic import BaseModel, ConfigDict
 
@@ -10,7 +10,6 @@ from xains.metrics.fidelity import (
     value_faithfulness,
 )
 from xains.metrics.narrativity import readability
-from xains.metrics.perplexity import PerplexityProvider
 from xains.schema import DatasetSchema
 from xains.types import TabularExplanationRequest
 
@@ -26,7 +25,6 @@ class ExtractionGrades(BaseModel):
     coverage: float
     hallucination_count: int
     readability: float | None = None
-    perplexity: float | None = None
     prompt_version: str
 
 
@@ -36,18 +34,8 @@ def grade_extraction(
     schema: DatasetSchema,
     narrative_text: str,
     k: int = 10,
-    perplexity_provider: PerplexityProvider | None = None,
 ) -> ExtractionGrades:
-    """Compute all metrics for ``extraction``.
-
-    ``perplexity_provider`` is optional; when ``None``, ``perplexity`` is
-    left at ``None`` (no provider call). Callers that want a perplexity
-    score supply a concrete ``PerplexityProvider``.
-    """
-    perplexity_value: float | None = None
-    if perplexity_provider is not None:
-        perplexity_value = perplexity_provider.compute(narrative_text)
-
+    """Compute verbalization-fidelity metrics for ``extraction``."""
     try:
         readability_value = readability(extraction, narrative_text)
     except ImportError:
@@ -60,6 +48,5 @@ def grade_extraction(
         coverage=coverage(extraction, schema, k=k),
         hallucination_count=hallucination_count(extraction),
         readability=readability_value,
-        perplexity=perplexity_value,
         prompt_version=extraction.prompt_version,
     )

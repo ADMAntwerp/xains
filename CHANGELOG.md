@@ -71,6 +71,7 @@ While `0.y.z`, minor versions may contain breaking changes.
   `pip install "xainarratives[extra]"` becomes
   `pip install "xain[extra]"`. ADR 0021.
 - Renamed the package from `xain` to `xains` (the PyPI name `xain` was unavailable). `from xain import ...` becomes `from xains import ...`; the distribution is `xains`. ADR 0022.
+- `ExtractionGrades` no longer carries a `perplexity` field and `grade_extraction` no longer accepts a `perplexity_provider` keyword argument. Whole-text perplexity remains available as `NarrativityGrades.ppl_ordered` via `grade_narrativity`. ADR 0023.
 
 ### Added
 
@@ -206,6 +207,11 @@ While `0.y.z`, minor versions may contain breaking changes.
   callers in the codebase, failed the CLAUDE.md "abstractions need ≥2
   implementations" rule. Replaced by `HuggingFacePerplexityProvider` and
   `OpenAICompatibleEchoProvider`.
+- `perplexity` field from `ExtractionGrades` and `perplexity_provider`
+  keyword argument from `grade_extraction`. Whole-text perplexity is the
+  narrativity surface (`NarrativityGrades.ppl_ordered` via
+  `grade_narrativity`), not the fidelity surface. Pre-1.0 hard cutover,
+  no shim. ADR 0023.
 
 ## [0.0.1] - 2026-04-23
 
