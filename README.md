@@ -98,13 +98,19 @@ grades = xains.grade_extraction(
     narrative_text=result.text,
     k=5,
 )
-print(grades)
+print(xains.render_grades(extraction=grades))
 ```
 
 ```text
-sign_faithfulness=1.0 value_faithfulness=1.0 rank_correlation=1.0 coverage=1.0
-hallucination_count=0 prompt_version='2'
+Verbalization fidelity
+  sign_faithfulness ↑: 1.0
+  value_faithfulness ↑: 1.0
+  rank_correlation ↑: 1.0
+  coverage ↑: 1.0
+  hallucination_count ↓: 0
 ```
+
+Arrows mark the desired direction for each metric (`↑` higher is better, `↓` lower is better). `render_grades` also accepts a `narrativity=` argument and emits a second `Narrativity` section.
 
 `grade_narrativity` scores how well the text reads as a narrative, using the metrics from Cedro & Martens 2026. It needs a perplexity provider (any OpenAI-compatible endpoint that returns logprobs):
 

@@ -182,6 +182,12 @@ While `0.y.z`, minor versions may contain breaking changes.
   now top-level importable: `from xainarratives import
   AnthropicProvider, OpenAIProvider, OpenRouterProvider,
   OpenAICompatibleProvider, ...`. ADR 0020.
+- `render_grades(extraction=None, narrativity=None) -> str` plus
+  source-of-truth direction dicts (`EXTRACTION_GRADE_DIRECTIONS`,
+  `NARRATIVITY_GRADE_DIRECTIONS`). Scored metrics render with desired-direction
+  arrows (`↑`/`↓`); auxiliary narrativity primitives render without arrows;
+  `prompt_version` is omitted. All three are top-level importable from
+  `xains` (and from `xains.metrics`). ADR 0024.
 
 ### Changed
 

@@ -11,8 +11,9 @@ from xains.metrics.fidelity import (
     sign_faithfulness,
     value_faithfulness,
 )
-from xains.metrics.grader import ExtractionGrades, grade_extraction
+from xains.metrics.grader import EXTRACTION_GRADE_DIRECTIONS, ExtractionGrades, grade_extraction
 from xains.metrics.narrativity import (
+    NARRATIVITY_GRADE_DIRECTIONS,
     NarrativityGrades,
     ccpr,
     cecpr,
@@ -30,8 +31,11 @@ from xains.metrics.perplexity import (
 )
 from xains.metrics.perplexity_api import OpenAICompatibleEchoProvider
 from xains.metrics.perplexity_hf import HuggingFacePerplexityProvider
+from xains.metrics.render import render_grades
 
 __all__ = [
+    "EXTRACTION_GRADE_DIRECTIONS",
+    "NARRATIVITY_GRADE_DIRECTIONS",
     "DisabledProvider",
     "ExtractionGrades",
     "HuggingFacePerplexityProvider",
@@ -49,6 +53,7 @@ __all__ = [
     "hallucination_count",
     "rank_correlation",
     "readability",
+    "render_grades",
     "sign_faithfulness",
     "ttcpr",
     "value_faithfulness",
