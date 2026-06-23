@@ -193,6 +193,10 @@ While `0.y.z`, minor versions may contain breaking changes.
   auxiliaries; no visible effect on ExtractionGrades). Default `False`
   preserves prior behaviour. README narrativity sample and notebook Step 7
   display use it. ADR 0026.
+- Optional `dotenv` extra (`pip install "xains[dotenv]"`) bundling
+  `python-dotenv>=1.0`, plus a tracked `.env.example` at the repo root.
+  The library does not call `load_dotenv()` itself; callers opt in when
+  they want it. Core deps remain pydantic-only. ADR 0027.
 
 ### Changed
 
