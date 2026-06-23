@@ -9,7 +9,6 @@ from xains.metrics.fidelity import (
     sign_faithfulness,
     value_faithfulness,
 )
-from xains.metrics.narrativity import readability
 from xains.schema import DatasetSchema
 from xains.types import TabularExplanationRequest
 
@@ -24,8 +23,16 @@ class ExtractionGrades(BaseModel):
     rank_correlation: float | None = None
     coverage: float
     hallucination_count: int
-    readability: float | None = None
     prompt_version: str
+
+
+EXTRACTION_GRADE_DIRECTIONS: dict[str, str] = {
+    "sign_faithfulness": "↑",
+    "value_faithfulness": "↑",
+    "rank_correlation": "↑",
+    "coverage": "↑",
+    "hallucination_count": "↓",
+}
 
 
 def grade_extraction(
@@ -36,17 +43,11 @@ def grade_extraction(
     k: int = 10,
 ) -> ExtractionGrades:
     """Compute verbalization-fidelity metrics for ``extraction``."""
-    try:
-        readability_value = readability(extraction, narrative_text)
-    except ImportError:
-        readability_value = None
-
     return ExtractionGrades(
         sign_faithfulness=sign_faithfulness(extraction, request),
         value_faithfulness=value_faithfulness(extraction, request),
         rank_correlation=rank_correlation(extraction, request),
         coverage=coverage(extraction, schema, k=k),
         hallucination_count=hallucination_count(extraction),
-        readability=readability_value,
         prompt_version=extraction.prompt_version,
     )

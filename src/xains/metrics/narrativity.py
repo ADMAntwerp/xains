@@ -287,6 +287,17 @@ class NarrativityGrades(BaseModel):
     n_sentences: int | None = None
 
 
+NARRATIVITY_GRADE_DIRECTIONS: dict[str, str] = {
+    "csr": "↑",
+    "fdr": "↑",
+    "dcpr": "↓",
+    "ccpr": "↓",
+    "cecpr": "↓",
+    "ttcpr": "↓",
+    "vcpr": "↓",
+}
+
+
 def _safe_call(fn: Any, *args: Any, **kwargs: Any) -> Any:
     """Call ``fn``; return ``None`` on ``ImportError`` (missing optional dep)."""
     try:

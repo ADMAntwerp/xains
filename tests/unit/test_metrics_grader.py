@@ -1,11 +1,10 @@
 """Unit tests for grade_extraction and ExtractionGrades.
 
 The grader is the integration point for verbalization-fidelity metrics:
-pure data in, grades out. Perplexity is a narrativity concept (ADR 0008,
-ADR 0023) and lives in NarrativityGrades, not here.
+pure data in, grades out. Perplexity (ADR 0023) and readability (ADR 0025)
+are narrativity concepts and do not live on ExtractionGrades.
 """
 
-import sys
 from typing import Any
 
 import pytest
@@ -96,7 +95,6 @@ def test_grade_extraction_populates_all_fields_for_complete_extraction() -> None
     assert grades.rank_correlation is not None
     assert grades.coverage == 1.0  # 2 of min(10, 2) = 2.
     assert grades.hallucination_count == 0
-    assert grades.readability is not None
 
 
 def test_grade_extraction_with_no_resolved_features_sets_fidelity_metrics_none() -> None:
@@ -133,7 +131,6 @@ def test_extraction_grades_rejects_extra_fields() -> None:
             rank_correlation=None,
             coverage=0.0,
             hallucination_count=0,
-            readability=None,
             prompt_version="2",
             unknown_extra="bogus",  # type: ignore[call-arg]
         )
@@ -148,8 +145,21 @@ def test_extraction_grades_rejects_perplexity_field() -> None:
             rank_correlation=None,
             coverage=0.0,
             hallucination_count=0,
-            readability=None,
             perplexity=None,  # type: ignore[call-arg]
+            prompt_version="2",
+        )
+
+
+def test_extraction_grades_rejects_readability_field() -> None:
+    """Per ADR 0025, readability is opt-in via narrativity.readability(); not on the aggregate."""
+    with pytest.raises(ValidationError):
+        ExtractionGrades(
+            sign_faithfulness=None,
+            value_faithfulness=None,
+            rank_correlation=None,
+            coverage=0.0,
+            hallucination_count=0,
+            readability=None,  # type: ignore[call-arg]
             prompt_version="2",
         )
 
@@ -167,18 +177,3 @@ def test_grade_extraction_does_not_accept_perplexity_provider_kwarg() -> None:
             narrative_text="Some narrative text.",
             perplexity_provider=object(),  # type: ignore[call-arg]
         )
-
-
-def test_grade_extraction_handles_missing_textstat_gracefully(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """When textstat is unavailable, readability=None but other metrics are populated."""
-    monkeypatch.setitem(sys.modules, "textstat", None)
-    request = _request(("dti", 0.41, 0.37))
-    schema = _schema("dti")
-    extraction = _extraction(features={"dti": _claim("dti", rank=1, sign=1)})
-    grades = grade_extraction(extraction, request, schema, narrative_text="Some narrative text.")
-    assert grades.readability is None
-    assert grades.coverage == 1.0
-    assert grades.hallucination_count == 0
-    assert grades.prompt_version == "2"

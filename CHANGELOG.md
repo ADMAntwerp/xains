@@ -72,6 +72,7 @@ While `0.y.z`, minor versions may contain breaking changes.
   `pip install "xain[extra]"`. ADR 0021.
 - Renamed the package from `xain` to `xains` (the PyPI name `xain` was unavailable). `from xain import ...` becomes `from xains import ...`; the distribution is `xains`. ADR 0022.
 - `ExtractionGrades` no longer carries a `perplexity` field and `grade_extraction` no longer accepts a `perplexity_provider` keyword argument. Whole-text perplexity remains available as `NarrativityGrades.ppl_ordered` via `grade_narrativity`. ADR 0023.
+- `ExtractionGrades` no longer carries a `readability` field; `grade_extraction` no longer computes it. The `readability(extraction, narrative_text)` helper, the `textstat` optional extra, and the public re-exports remain - readability becomes opt-in, called directly. ADR 0025.
 
 ### Added
 
