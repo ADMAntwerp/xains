@@ -188,6 +188,11 @@ While `0.y.z`, minor versions may contain breaking changes.
   arrows (`↑`/`↓`); auxiliary narrativity primitives render without arrows;
   `prompt_version` is omitted. All three are top-level importable from
   `xains` (and from `xains.metrics`). ADR 0024.
+- `scored_only: bool = False` option on `render_grades`. When `True`, fields
+  absent from the direction dicts are omitted (drops the 9 NarrativityGrades
+  auxiliaries; no visible effect on ExtractionGrades). Default `False`
+  preserves prior behaviour. README narrativity sample and notebook Step 7
+  display use it. ADR 0026.
 
 ### Changed
 

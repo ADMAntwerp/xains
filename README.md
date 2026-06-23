@@ -123,14 +123,21 @@ ppl = OpenAICompatibleEchoProvider(
     api_key_env_var="TOGETHER_API_KEY",
 )
 narrativity = xains.grade_narrativity(result.text, ppl)
-print(narrativity.fdr, narrativity.csr)
+print(xains.render_grades(narrativity=narrativity, scored_only=True))
 ```
 
 ```text
-0.29 0.11
+Narrativity
+  csr ↑: 0.27
+  dcpr ↓: 1.3
+  ccpr ↓: 203.14
+  cecpr ↓: 29252.68
+  fdr ↑: 0.29
+  ttcpr ↓: 2.29
+  vcpr ↓: 50.79
 ```
 
-The two values are Fluency-Diversity Rate (FDR) and Continuous Structure Rate (CSR), both higher-is-better - two of the seven Cedro & Martens 2026 narrativity metrics; the notebook computes all seven plus auxiliary primitives.
+These are the seven Cedro & Martens 2026 narrativity metrics. `scored_only=True` hides the nine auxiliary primitives (`ppl_ordered`, `ttr`, `n_sentences`, ...) which `grade_narrativity` also captures for paper replication; omit the flag to see them.
 
 ### End-to-end notebook
 

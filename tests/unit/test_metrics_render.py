@@ -119,3 +119,45 @@ def test_render_extraction_only_does_not_emit_narrativity_header() -> None:
 def test_render_narrativity_only_does_not_emit_fidelity_header() -> None:
     out = render_grades(narrativity=_narr_full())
     assert "Verbalization fidelity" not in out
+
+
+# ------------------------------------------------------ scored_only (ADR 0026)
+
+
+def test_scored_only_hides_narrativity_auxiliaries() -> None:
+    out = render_grades(narrativity=_narr_full(), scored_only=True)
+    for aux in (
+        "ppl_ordered",
+        "ppl_shuffled",
+        "decay_constant",
+        "dist2",
+        "ttr",
+        "vr",
+        "cr",
+        "cer",
+        "n_sentences",
+    ):
+        assert aux not in out, f"{aux} should be hidden when scored_only=True"
+
+
+def test_scored_only_keeps_scored_narrativity_metrics_with_arrows() -> None:
+    out = render_grades(narrativity=_narr_full(), scored_only=True)
+    assert "csr ↑:" in out
+    assert "fdr ↑:" in out
+    assert "dcpr ↓:" in out
+    assert "ccpr ↓:" in out
+    assert "cecpr ↓:" in out
+    assert "ttcpr ↓:" in out
+    assert "vcpr ↓:" in out
+
+
+def test_scored_only_default_false_still_renders_auxiliaries() -> None:
+    out = render_grades(narrativity=_narr_full())
+    assert "ppl_ordered" in out
+    assert "n_sentences" in out
+
+
+def test_scored_only_on_extraction_is_a_noop_visually() -> None:
+    plain = render_grades(extraction=_ext_full())
+    filtered = render_grades(extraction=_ext_full(), scored_only=True)
+    assert plain == filtered
