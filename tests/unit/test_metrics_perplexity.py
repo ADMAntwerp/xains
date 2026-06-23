@@ -1,12 +1,12 @@
 """Unit tests for PerplexityProvider Protocol and concrete providers.
 
-Note: the Protocol implementation in ``xain.metrics.perplexity`` MUST
+Note: the Protocol implementation in ``xains.metrics.perplexity`` MUST
 be decorated with ``@runtime_checkable`` — without it, every ``isinstance``
 assertion in this file raises ``TypeError``. The two ``_implements_protocol``
 tests below catch that regression as a ``TypeError`` at test time.
 """
 
-from xain.metrics import (
+from xains.metrics import (
     DisabledProvider,
     PerplexityProvider,
 )
@@ -31,7 +31,7 @@ def test_disabled_provider_implements_protocol() -> None:
 
 def test_api_perplexity_provider_deleted() -> None:
     """Confirm the abstract APIPerplexityProvider placeholder was removed in PR 7."""
-    import xain.metrics.perplexity as ppl
+    import xains.metrics.perplexity as ppl
 
     assert not hasattr(ppl, "APIPerplexityProvider")
 

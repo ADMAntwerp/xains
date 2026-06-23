@@ -11,7 +11,7 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
-from xain import (
+from xains import (
     DatasetSchema,
     ExtractionGrades,
     FeatureClaim,
@@ -23,7 +23,7 @@ from xain import (
     TabularExplanationRequest,
     TargetSchema,
 )
-from xain.metrics import grade_extraction
+from xains.metrics import grade_extraction
 
 # ------------------------------------------------------ helpers
 

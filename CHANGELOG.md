@@ -70,6 +70,7 @@ While `0.y.z`, minor versions may contain breaking changes.
   `from xainarratives import ...` becomes `from xain import ...`;
   `pip install "xainarratives[extra]"` becomes
   `pip install "xain[extra]"`. ADR 0021.
+- Renamed the package from `xain` to `xains` (the PyPI name `xain` was unavailable). `from xain import ...` becomes `from xains import ...`; the distribution is `xains`. ADR 0022.
 
 ### Added
 

@@ -8,7 +8,7 @@ zero, provider returning None, etc.) — never raising.
 
 import pytest
 
-from xain.metrics.narrativity import (
+from xains.metrics.narrativity import (
     ccpr,
     cecpr,
     csr,

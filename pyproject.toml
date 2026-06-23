@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "xain"
+name = "xains"
 version = "0.0.1"
 description = "Natural-language verbalization of ML model predictions from pre-computed attributions."
 readme = "README.md"
@@ -79,14 +79,14 @@ notebook = [
 ]
 
 [project.urls]
-Repository = "https://github.com/ADMAntwerp/xain"
-Issues = "https://github.com/ADMAntwerp/xain/issues"
+Repository = "https://github.com/ADMAntwerp/xains"
+Issues = "https://github.com/ADMAntwerp/xains/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/xain"]
+packages = ["src/xains"]
 
 [tool.hatch.build.targets.sdist]
-include = ["src/xain", "README.md", "LICENSE", "CHANGELOG.md"]
+include = ["src/xains", "README.md", "LICENSE", "CHANGELOG.md"]
 
 # ---------- Ruff ----------
 [tool.ruff]
@@ -113,7 +113,7 @@ ignore = []
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["N802"]  # allow snake_case mirrors of CamelCase in tests
-"src/xain/config.py" = ["E501"]  # DEFAULT_NARRATIVE_RULES is a verbatim multi-line paper-quote
+"src/xains/config.py" = ["E501"]  # DEFAULT_NARRATIVE_RULES is a verbatim multi-line paper-quote
 
 [tool.ruff.format]
 quote-style = "double"
@@ -172,7 +172,7 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["src/xain"]
+source = ["src/xains"]
 branch = true
 
 [tool.coverage.report]

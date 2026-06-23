@@ -4,7 +4,7 @@ import sys
 
 import pytest
 
-from xain.metrics._internal.curve_fit import fit_decay_constant
+from xains.metrics._internal.curve_fit import fit_decay_constant
 
 
 def test_fit_decay_constant_monotonic_decreasing_returns_positive_b() -> None:
@@ -49,5 +49,5 @@ def test_fit_decay_constant_raises_when_scipy_missing(
     # ``from scipy.optimize import curve_fit`` which touches both.
     monkeypatch.setitem(sys.modules, "scipy", None)
     monkeypatch.setitem(sys.modules, "scipy.optimize", None)
-    with pytest.raises(ImportError, match=r'pip install "xain\[narrativity\]"'):
+    with pytest.raises(ImportError, match=r'pip install "xains\[narrativity\]"'):
         fit_decay_constant([11.0, 8.0, 7.0, 6.0, 5.5])

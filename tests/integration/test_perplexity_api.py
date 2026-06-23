@@ -16,7 +16,7 @@ import sys
 
 import pytest
 
-from xain.metrics import OpenAICompatibleEchoProvider, PerplexityProvider
+from xains.metrics import OpenAICompatibleEchoProvider, PerplexityProvider
 
 _BASE_URL = "https://api.together.xyz/v1"
 _MODEL = "meta-llama/Meta-Llama-3-8B-Instruct-Lite"
@@ -104,7 +104,7 @@ def test_api_provider_raises_when_openai_missing(
 ) -> None:
     """Forcing ``import openai`` to fail yields ImportError with install hint."""
     monkeypatch.setitem(sys.modules, "openai", None)
-    with pytest.raises(ImportError, match=r'pip install "xain\[perplexity-api\]"'):
+    with pytest.raises(ImportError, match=r'pip install "xains\[perplexity-api\]"'):
         OpenAICompatibleEchoProvider(
             base_url=_BASE_URL,
             api_key=_PLACEHOLDER_KEY,

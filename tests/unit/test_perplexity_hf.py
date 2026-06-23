@@ -10,7 +10,7 @@ import warnings
 
 import pytest
 
-from xain.metrics import HuggingFacePerplexityProvider, PerplexityProvider
+from xains.metrics import HuggingFacePerplexityProvider, PerplexityProvider
 
 _TINY_MODEL = "sshleifer/tiny-gpt2"
 
@@ -120,7 +120,7 @@ def test_hf_provider_raises_when_transformers_missing(
 ) -> None:
     """Forcing ``import transformers`` to fail yields ImportError with install hint."""
     monkeypatch.setitem(sys.modules, "transformers", None)
-    with pytest.raises(ImportError, match=r'pip install "xain\[perplexity-hf\]"'):
+    with pytest.raises(ImportError, match=r'pip install "xains\[perplexity-hf\]"'):
         HuggingFacePerplexityProvider(model_name=_TINY_MODEL, device="cpu")
 
 
@@ -129,5 +129,5 @@ def test_hf_provider_raises_when_torch_missing(
 ) -> None:
     """Forcing ``import torch`` to fail yields ImportError with install hint."""
     monkeypatch.setitem(sys.modules, "torch", None)
-    with pytest.raises(ImportError, match=r'pip install "xain\[perplexity-hf\]"'):
+    with pytest.raises(ImportError, match=r'pip install "xains\[perplexity-hf\]"'):
         HuggingFacePerplexityProvider(model_name=_TINY_MODEL, device="cpu")

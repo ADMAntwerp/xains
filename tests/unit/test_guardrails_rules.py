@@ -9,7 +9,7 @@ feature-invention check was dropped.)
 import pytest
 from pydantic import ValidationError
 
-from xain import (
+from xains import (
     DatasetSchema,
     FeatureSchema,
     Modality,
@@ -17,7 +17,7 @@ from xain import (
     TargetSchema,
     TextSpec,
 )
-from xain.guardrails import GuardrailResult, class_name_mentioned
+from xains.guardrails import GuardrailResult, class_name_mentioned
 
 # ------------------------------------------------------ fixtures
 

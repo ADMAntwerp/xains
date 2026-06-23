@@ -10,7 +10,7 @@ import json
 import pytest
 from pydantic import ValidationError
 
-from xain import (
+from xains import (
     DatasetSchema,
     FeatureClaim,
     FeatureSchema,
@@ -21,8 +21,8 @@ from xain import (
     TabularExplanationRequest,
     TargetSchema,
 )
-from xain.guardrails import GuardrailResult, extract_narrative_claims
-from xain.providers import MockLLMProvider
+from xains.guardrails import GuardrailResult, extract_narrative_claims
+from xains.providers import MockLLMProvider
 
 # ------------------------------------------------------ fixtures
 

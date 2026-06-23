@@ -66,13 +66,13 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 ---
 
-# Project: xain
+# Project: xains
 
 Project-specific rules. These take precedence over the generic guidelines above where they conflict. Read `docs/design.md` before making non-trivial changes.
 
 ## Scope (Hard Boundary)
 
-`xain` is a **post-hoc explanation verbalizer**. It takes pre-computed inputs and produces natural-language explanations plus verbalization-quality metrics.
+`xains` is a **post-hoc explanation verbalizer**. It takes pre-computed inputs and produces natural-language explanations plus verbalization-quality metrics.
 
 **It never:**
 - Trains models
@@ -86,7 +86,7 @@ If a feature would require any of the above, it does not belong in this library.
 
 Core runtime dependency: `pydantic` only. Add another only with an ADR justifying it.
 
-**Never import in core** (`src/xain/` outside of `integrations/` and `eval/` subpackages):
+**Never import in core** (`src/xains/` outside of `integrations/` and `eval/` subpackages):
 
 - `torch`, `tensorflow`, `jax`
 - `sklearn`, `xgboost`, `lightgbm`
@@ -94,7 +94,7 @@ Core runtime dependency: `pydantic` only. Add another only with an ADR justifyin
 - `transformers`, `sentence-transformers`
 - `numpy`, `pandas`
 
-These belong in optional extras, imported lazily inside `xain/integrations/*` or `xain/eval/*` adapters with `try: import x` guards that raise a clear `ImportError` telling the user the right `pip install xain[extra]` command.
+These belong in optional extras, imported lazily inside `xains/integrations/*` or `xains/eval/*` adapters with `try: import x` guards that raise a clear `ImportError` telling the user the right `pip install xains[extra]` command.
 
 ## Abstraction Rule
 
@@ -124,7 +124,7 @@ The library accepts a **list** of pre-computed counterfactual instances (length 
 
 ## Integration Naming
 
-Adapters in `xain/integrations/` are named by the **shape of the input**, not the upstream tool. E.g., `from_feature_importance` (accepts SHAP, LIME, sklearn feature_importances_, permutation importance, any signed-per-feature scalar), not `from_shap`.
+Adapters in `xains/integrations/` are named by the **shape of the input**, not the upstream tool. E.g., `from_feature_importance` (accepts SHAP, LIME, sklearn feature_importances_, permutation importance, any signed-per-feature scalar), not `from_shap`.
 
 ## Testing
 

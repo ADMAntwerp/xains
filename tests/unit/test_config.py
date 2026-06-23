@@ -1,10 +1,10 @@
-"""Tests for xain.config."""
+"""Tests for xains.config."""
 
 import pytest
 from pydantic import ValidationError
 
-from xain import ExplanationConfig
-from xain.config import DEFAULT_NARRATIVE_RULES
+from xains import ExplanationConfig
+from xains.config import DEFAULT_NARRATIVE_RULES
 
 
 def test_defaults() -> None:

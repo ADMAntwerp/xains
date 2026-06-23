@@ -2,7 +2,7 @@
 
 import pytest
 
-from xain import (
+from xains import (
     DatasetSchema,
     FeatureClaim,
     FeatureSchema,
@@ -10,7 +10,7 @@ from xain import (
     NarrativeExtraction,
     TargetSchema,
 )
-from xain.metrics import coverage, hallucination_count
+from xains.metrics import coverage, hallucination_count
 
 # ------------------------------------------------------ helpers
 

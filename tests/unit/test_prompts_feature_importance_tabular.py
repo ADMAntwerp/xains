@@ -1,8 +1,8 @@
-"""Tests for xain.prompts.feature_importance_tabular."""
+"""Tests for xains.prompts.feature_importance_tabular."""
 
 import pytest
 
-from xain import (
+from xains import (
     DatasetSchema,
     ExplanationConfig,
     FeatureSchema,
@@ -13,8 +13,8 @@ from xain import (
     TargetSchema,
     TextExplanationRequest,
 )
-from xain.config import DEFAULT_NARRATIVE_RULES
-from xain.prompts import FeatureImportanceTabularPromptTemplate
+from xains.config import DEFAULT_NARRATIVE_RULES
+from xains.prompts import FeatureImportanceTabularPromptTemplate
 
 
 def _assert_value_near_name(user: str, name: str, value: str, window: int = 40) -> None:

@@ -12,7 +12,7 @@ import json
 
 import pytest
 
-from xain import (
+from xains import (
     DatasetSchema,
     Explainer,
     ExplanationConfig,
@@ -23,8 +23,8 @@ from xain import (
     TabularExplanationRequest,
     TargetSchema,
 )
-from xain.generation import GenerationResult, TemplatedNarrativeGenerator
-from xain.providers import MockLLMProvider
+from xains.generation import GenerationResult, TemplatedNarrativeGenerator
+from xains.providers import MockLLMProvider
 
 
 def _credit_schema() -> DatasetSchema:

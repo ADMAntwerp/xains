@@ -13,7 +13,7 @@ import json
 
 import pytest
 
-from xain import (
+from xains import (
     DatasetSchema,
     Explainer,
     ExplanationConfig,
@@ -29,9 +29,9 @@ from xain import (
     TextSpec,
     TokenContribution,
 )
-from xain.guardrails import NarrativeExtraction
-from xain.prompts.base import PromptTemplate
-from xain.providers import LLMResponse, MockLLMProvider
+from xains.guardrails import NarrativeExtraction
+from xains.prompts.base import PromptTemplate
+from xains.providers import LLMResponse, MockLLMProvider
 
 # ------------------------------------------------------ helpers
 

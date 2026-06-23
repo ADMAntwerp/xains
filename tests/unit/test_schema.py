@@ -1,9 +1,9 @@
-"""Tests for xain.schema."""
+"""Tests for xains.schema."""
 
 import pytest
 from pydantic import ValidationError
 
-from xain import (
+from xains import (
     DatasetSchema,
     FeatureSchema,
     GraphSpec,

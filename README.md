@@ -1,70 +1,70 @@
-# xain
+# xains
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-brightgreen.svg)](https://opensource.org/licenses/MIT)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org)
 
-<!-- TODO (add as each service comes online for ADMAntwerp/xain):
-[![PyPI version](https://img.shields.io/pypi/v/xain.svg)](https://pypi.org/project/xain/)
-[![Tests](https://github.com/ADMAntwerp/xain/actions/workflows/ci.yml/badge.svg)](https://github.com/ADMAntwerp/xain/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/ADMAntwerp/xain/branch/master/graph/badge.svg)](https://codecov.io/gh/ADMAntwerp/xain)
-[![Read the Docs](https://readthedocs.org/projects/xain/badge/?version=latest)](https://xain.readthedocs.io/en/latest/)
+<!-- TODO (add as each service comes online for ADMAntwerp/xains):
+[![PyPI version](https://img.shields.io/pypi/v/xains.svg)](https://pypi.org/project/xains/)
+[![Tests](https://github.com/ADMAntwerp/xains/actions/workflows/ci.yml/badge.svg)](https://github.com/ADMAntwerp/xains/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/ADMAntwerp/xains/branch/master/graph/badge.svg)](https://codecov.io/gh/ADMAntwerp/xains)
+[![Read the Docs](https://readthedocs.org/projects/xains/badge/?version=latest)](https://xains.readthedocs.io/en/latest/)
 -->
 
-xain generates explainable AI (XAI) narratives - hence the name. It turns technical XAI outputs such as SHAP attributions and counterfactuals into clear natural-language explanations that make model decisions understandable to a broad audience.
+xains generates explainable AI (XAI) narratives - hence the name. It turns technical XAI outputs such as SHAP attributions and counterfactuals into clear natural-language explanations that make model decisions understandable to a broad audience.
 
 > **Scope.** This library generates natural-language XAI narratives from technical outputs like SHAP attributions or counterfactual explanations, making the explanations more transparent and understandable.
 
 ## Install
 
 ```bash
-git clone https://github.com/ADMAntwerp/xain.git
-cd xain
+git clone https://github.com/ADMAntwerp/xains.git
+cd xains
 pip install -e .
 ```
 
 ## Minimal example
 
 ```python
-import xain
-import xain.prompts
+import xains
+import xains.prompts
 
-schema = xain.DatasetSchema(
-    modality=xain.Modality.TABULAR,
+schema = xains.DatasetSchema(
+    modality=xains.Modality.TABULAR,
     name="credit_risk",
     description="Predicts 24-month default on personal loans.",
-    target=xain.TargetSchema(
+    target=xains.TargetSchema(
         name="default",
         description="Whether the applicant defaulted.",
         classes={0: "Repaid", 1: "Defaulted"},
     ),
     features=[
-        xain.FeatureSchema(name="age", dtype="numeric", unit="years",
+        xains.FeatureSchema(name="age", dtype="numeric", unit="years",
                            description="Applicant age at application."),
-        xain.FeatureSchema(name="salary", dtype="numeric", unit="EUR",
+        xains.FeatureSchema(name="salary", dtype="numeric", unit="EUR",
                            description="Annual gross salary."),
-        xain.FeatureSchema(name="debt_to_income", dtype="numeric",
+        xains.FeatureSchema(name="debt_to_income", dtype="numeric",
                            description="Debt-to-income ratio."),
     ],
 )
 
-request = xain.TabularExplanationRequest(
+request = xains.TabularExplanationRequest(
     features={"age": 29, "salary": 52000, "debt_to_income": 0.41},
-    prediction=xain.Prediction(predicted_class=1, probabilities={0: 0.2, 1: 0.8}),
+    prediction=xains.Prediction(predicted_class=1, probabilities={0: 0.2, 1: 0.8}),
     contributions=[
-        xain.TabularContribution(name="debt_to_income", value=0.41, importance=0.37),
-        xain.TabularContribution(name="salary", value=52000, importance=-0.21),
-        xain.TabularContribution(name="age", value=29, importance=-0.12),
+        xains.TabularContribution(name="debt_to_income", value=0.41, importance=0.37),
+        xains.TabularContribution(name="salary", value=52000, importance=-0.21),
+        xains.TabularContribution(name="age", value=29, importance=-0.12),
     ],
 )
 
-llm = xain.AnthropicProvider(model="claude-haiku-4-5", max_tokens=512)
-explainer = xain.Explainer(
+llm = xains.AnthropicProvider(model="claude-haiku-4-5", max_tokens=512)
+explainer = xains.Explainer(
     schema=schema,
-    generator=xain.LLMNarrativeGenerator(
-        prompt_template=xain.prompts.FeatureImportanceTabularPromptTemplate(),
+    generator=xains.LLMNarrativeGenerator(
+        prompt_template=xains.prompts.FeatureImportanceTabularPromptTemplate(),
         llm=llm,
     ),
-    config=xain.ExplanationConfig(
+    config=xains.ExplanationConfig(
         mode="feature_importance", audience="end_user",
         max_length_words=40, extract_narrative=True,
     ),
@@ -88,10 +88,10 @@ weighing on your financial stability.
 
 ### Scoring the narrative
 
-A narrative is only useful if it is faithful to the attributions and reads well. xain scores both. `grade_extraction` checks the claims the narrative makes against the input attributions - sign, value, and rank fidelity, coverage, hallucination count, and readability (perplexity is added when a perplexity provider is supplied):
+A narrative is only useful if it is faithful to the attributions and reads well. xains scores both. `grade_extraction` checks the claims the narrative makes against the input attributions - sign, value, and rank fidelity, coverage, hallucination count, and readability (perplexity is added when a perplexity provider is supplied):
 
 ```python
-grades = xain.grade_extraction(
+grades = xains.grade_extraction(
     extraction=result.narrative_extraction,
     request=request,
     schema=schema,
@@ -109,14 +109,14 @@ hallucination_count=0 readability=30.09 perplexity=None prompt_version='2'
 `grade_narrativity` scores how well the text reads as a narrative, using the metrics from Cedro & Martens 2026. It needs a perplexity provider (any OpenAI-compatible endpoint that returns logprobs):
 
 ```python
-from xain.metrics import OpenAICompatibleEchoProvider
+from xains.metrics import OpenAICompatibleEchoProvider
 
 ppl = OpenAICompatibleEchoProvider(
     base_url="https://api.together.xyz/v1",
     model="meta-llama/Meta-Llama-3-8B-Instruct-Lite",
     api_key_env_var="TOGETHER_API_KEY",
 )
-narrativity = xain.grade_narrativity(result.text, ppl)
+narrativity = xains.grade_narrativity(result.text, ppl)
 print(narrativity.fdr, narrativity.csr)
 ```
 
@@ -134,22 +134,22 @@ See `docs/design.md` for the full design and `docs/decisions/` for recorded arch
 
 ## Choosing a model
 
-Any `LLMProvider` drops into `xain.LLMNarrativeGenerator(llm=...)` - pick the provider for the model you want:
+Any `LLMProvider` drops into `xains.LLMNarrativeGenerator(llm=...)` - pick the provider for the model you want:
 
 ```python
-import xain
+import xains
 
 # Anthropic (reads ANTHROPIC_API_KEY)
-llm = xain.AnthropicProvider(model="claude-haiku-4-5", max_tokens=512)
+llm = xains.AnthropicProvider(model="claude-haiku-4-5", max_tokens=512)
 
 # OpenAI (reads OPENAI_API_KEY)
-llm = xain.OpenAIProvider(model="gpt-4o-mini", max_tokens=512)
+llm = xains.OpenAIProvider(model="gpt-4o-mini", max_tokens=512)
 
 # OpenRouter - Llama, and many others (reads OPENROUTER_API_KEY)
-llm = xain.OpenRouterProvider(model="meta-llama/llama-3.3-70b-instruct", max_tokens=512)
+llm = xains.OpenRouterProvider(model="meta-llama/llama-3.3-70b-instruct", max_tokens=512)
 
 # Any OpenAI-compatible endpoint (Together, Groq, vLLM, ...) - set base_url + the env var to read
-llm = xain.OpenAICompatibleProvider(
+llm = xains.OpenAICompatibleProvider(
     base_url="https://api.together.xyz/v1",
     api_key_env_var="TOGETHER_API_KEY",
     model="meta-llama/Llama-3.3-70B-Instruct-Turbo",
@@ -157,7 +157,7 @@ llm = xain.OpenAICompatibleProvider(
 )
 ```
 
-Each reads its API key from the named env var (or pass `api_key=` explicitly); drop any of them into `xain.LLMNarrativeGenerator(llm=...)` exactly as the Minimal example does.
+Each reads its API key from the named env var (or pass `api_key=` explicitly); drop any of them into `xains.LLMNarrativeGenerator(llm=...)` exactly as the Minimal example does.
 
 ## License
 

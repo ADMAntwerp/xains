@@ -1,4 +1,4 @@
-"""Unit tests for xain.integrations.feature_importance.
+"""Unit tests for xains.integrations.feature_importance.
 
 The adapter is a pure data-shape translator — no network, no numpy, no
 upstream XAI libs. These tests pin the edge-case behaviour agreed in PR 3.
@@ -8,13 +8,13 @@ import math
 
 import pytest
 
-from xain import (
+from xains import (
     Prediction,
     TabularContribution,
     TabularCounterfactual,
     TabularExplanationRequest,
 )
-from xain.integrations import from_feature_importance
+from xains.integrations import from_feature_importance
 
 # ---------------------------------------------------------------- happy path
 

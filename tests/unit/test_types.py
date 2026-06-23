@@ -1,11 +1,11 @@
-"""Tests for xain.types — polymorphism, discriminators, validation."""
+"""Tests for xains.types — polymorphism, discriminators, validation."""
 
 from typing import Any
 
 import pytest
 from pydantic import TypeAdapter, ValidationError
 
-from xain import (
+from xains import (
     EdgeContribution,
     GraphCounterfactual,
     GraphExplanationRequest,
@@ -21,7 +21,7 @@ from xain import (
     TextExplanationRequest,
     TokenContribution,
 )
-from xain.types import Contribution, CounterfactualInstance, ExplanationRequest
+from xains.types import Contribution, CounterfactualInstance, ExplanationRequest
 
 
 class TestPrediction:

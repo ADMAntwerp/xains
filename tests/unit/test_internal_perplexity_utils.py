@@ -1,6 +1,6 @@
 """Unit tests for cumulative_perplexity helper."""
 
-from xain.metrics._internal.perplexity_utils import cumulative_perplexity
+from xains.metrics._internal.perplexity_utils import cumulative_perplexity
 
 
 class _FakeProvider:

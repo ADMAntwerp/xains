@@ -6,14 +6,14 @@ All metrics are pure: extraction + request → score | None. No I/O.
 import math
 from typing import Any
 
-from xain import (
+from xains import (
     FeatureClaim,
     NarrativeExtraction,
     Prediction,
     TabularContribution,
     TabularExplanationRequest,
 )
-from xain.metrics import (
+from xains.metrics import (
     rank_correlation,
     sign_faithfulness,
     value_faithfulness,

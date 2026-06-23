@@ -1,8 +1,8 @@
-"""Tests for xain.providers.mock + Protocol conformance."""
+"""Tests for xains.providers.mock + Protocol conformance."""
 
 import pytest
 
-from xain.providers import LLMProvider, MockLLMProvider
+from xains.providers import LLMProvider, MockLLMProvider
 
 
 def test_default_response() -> None:

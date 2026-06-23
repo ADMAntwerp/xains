@@ -9,8 +9,8 @@ import sys
 
 import pytest
 
-from xain import NarrativeExtraction
-from xain.metrics import readability
+from xains import NarrativeExtraction
+from xains.metrics import readability
 
 
 def _empty_extraction() -> NarrativeExtraction:
@@ -40,5 +40,5 @@ def test_readability_raises_clean_error_when_textstat_missing(
 ) -> None:
     """Forcing ``import textstat`` to fail yields a clear ImportError pointing at the extra."""
     monkeypatch.setitem(sys.modules, "textstat", None)
-    with pytest.raises(ImportError, match=r'pip install "xain\[textstat\]"'):
+    with pytest.raises(ImportError, match=r'pip install "xains\[textstat\]"'):
         readability(_empty_extraction(), "Some narrative text.")
