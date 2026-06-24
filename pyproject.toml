@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "xains"
-version = "0.0.1"
-description = "Natural-language verbalization of ML model predictions from pre-computed attributions."
+version = "0.1.0"
+description = "Explainable AI (XAI) narratives: turn technical XAI outputs into clear natural-language explanations."
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.11"

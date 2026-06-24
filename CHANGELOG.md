@@ -9,6 +9,8 @@ While `0.y.z`, minor versions may contain breaking changes.
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-06-23
+
 ### Changed (BREAKING)
 
 - `ExplanationConfig.mode` is now a required field with no default.
@@ -231,6 +233,11 @@ While `0.y.z`, minor versions may contain breaking changes.
   narrativity surface (`NarrativityGrades.ppl_ordered` via
   `grade_narrativity`), not the fidelity surface. Pre-1.0 hard cutover,
   no shim. ADR 0023.
+- `readability` field from `ExtractionGrades`; `grade_extraction` no
+  longer computes it. The `readability(extraction, narrative_text)`
+  helper, the `textstat` optional extra, and the public re-exports
+  remain - readability becomes opt-in, called directly. Pre-1.0 hard
+  cutover, no shim. ADR 0025.
 
 ## [0.0.1] - 2026-04-23
 
