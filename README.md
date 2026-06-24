@@ -1,12 +1,13 @@
 # `xains`
 
 [![PyPI version](https://img.shields.io/pypi/v/xains.svg)](https://pypi.org/project/xains/)
-[![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-brightgreen.svg)](https://opensource.org/licenses/MIT)
-
 [![Tests](https://github.com/ADMAntwerp/xains/actions/workflows/ci.yml/badge.svg)](https://github.com/ADMAntwerp/xains/actions/workflows/ci.yml)
-[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+
+[![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org)
 [![Downloads](https://static.pepy.tech/badge/xains)](https://pepy.tech/project/xains)
+
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Last commit](https://img.shields.io/github/last-commit/ADMAntwerp/xains)](https://github.com/ADMAntwerp/xains/commits/master)
 
 <!-- TODO (add as each service comes online for ADMAntwerp/xains):
@@ -14,7 +15,7 @@
 [![Read the Docs](https://readthedocs.org/projects/xains/badge/?version=latest)](https://xains.readthedocs.io/en/latest/)
 -->
 
-xains generates explainable AI (XAI) narratives - hence the name. It turns technical XAI outputs such as SHAP attributions and counterfactuals into clear natural-language explanations that make model decisions understandable to a broad audience. The feature-importance input can come from any method producing a signed per-feature scalar (SHAP, LIME, permutation importance, integrated gradients, sklearn feature_importances_, and so on); xains does not compute attributions, it consumes whatever you provide.
+`xains` generates explainable AI (XAI) narratives - hence the name. It turns technical XAI outputs such as SHAP attributions and counterfactuals into clear natural-language explanations that make model decisions understandable to a broad audience. The feature-importance input can come from any method producing a signed per-feature scalar (SHAP, LIME, permutation importance, integrated gradients, sklearn feature_importances_, and so on); xains does not compute attributions, it consumes whatever you provide.
 
 ## Installation
 
@@ -27,10 +28,6 @@ Or with [uv](https://docs.astral.sh/uv/):
 ```bash
 uv add xains
 ```
-
-### API keys
-
-Providers read their keys from the environment. Put them in a `.env` file (copy `.env.example` and fill in the providers you use). Loading the file is the caller's job (for example with `python-dotenv`).
 
 ## Minimal example
 
@@ -152,6 +149,10 @@ Narrativity
 ```
 
 These are the seven Cedro & Martens 2026 narrativity metrics. `scored_only=True` hides the nine auxiliary primitives (`ppl_ordered`, `ttr`, `n_sentences`, ...) which `grade_narrativity` also captures for paper replication; omit the flag to see them.
+
+### API keys
+
+The remote LLM providers need API keys (set them in your environment or a `.env` file; see `.env.example`).
 
 ### End-to-end notebook
 
