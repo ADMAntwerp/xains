@@ -1,21 +1,20 @@
 # `xains`
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-brightgreen.svg)](https://opensource.org/licenses/MIT)
-[![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org)
 [![PyPI version](https://img.shields.io/pypi/v/xains.svg)](https://pypi.org/project/xains/)
+[![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-brightgreen.svg)](https://opensource.org/licenses/MIT)
+
 [![Tests](https://github.com/ADMAntwerp/xains/actions/workflows/ci.yml/badge.svg)](https://github.com/ADMAntwerp/xains/actions/workflows/ci.yml)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Downloads](https://static.pepy.tech/badge/xains)](https://pepy.tech/project/xains)
 [![Last commit](https://img.shields.io/github/last-commit/ADMAntwerp/xains)](https://github.com/ADMAntwerp/xains/commits/master)
-[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
 <!-- TODO (add as each service comes online for ADMAntwerp/xains):
 [![codecov](https://codecov.io/gh/ADMAntwerp/xains/branch/master/graph/badge.svg)](https://codecov.io/gh/ADMAntwerp/xains)
 [![Read the Docs](https://readthedocs.org/projects/xains/badge/?version=latest)](https://xains.readthedocs.io/en/latest/)
 -->
 
-xains generates explainable AI (XAI) narratives - hence the name. It turns technical XAI outputs such as SHAP attributions and counterfactuals into clear natural-language explanations that make model decisions understandable to a broad audience.
-
-> **Scope.** This library generates natural-language XAI narratives from technical outputs like SHAP attributions or counterfactual explanations, making the explanations more transparent and understandable. Feature-importance input can come from any method producing a signed per-feature scalar - SHAP, LIME, permutation importance, integrated gradients, sklearn `feature_importances_`, and so on. xains does not compute attributions; it consumes whatever the user provides.
+xains generates explainable AI (XAI) narratives - hence the name. It turns technical XAI outputs such as SHAP attributions and counterfactuals into clear natural-language explanations that make model decisions understandable to a broad audience. The feature-importance input can come from any method producing a signed per-feature scalar (SHAP, LIME, permutation importance, integrated gradients, sklearn feature_importances_, and so on); xains does not compute attributions, it consumes whatever you provide.
 
 ## Installation
 
@@ -31,28 +30,7 @@ uv add xains
 
 ### API keys
 
-xains reads provider API keys from the process environment. The library does **not** auto-load `.env` files - you opt in by installing the `dotenv` extra and calling `load_dotenv()` yourself before any xains-using code runs.
-
-```bash
-pip install "xains[dotenv]"
-```
-
-Copy `.env.example` to `.env`, fill in the keys you need, then at the top of your script:
-
-```python
-from dotenv import load_dotenv
-load_dotenv()
-```
-
-Or export the vars in your shell:
-
-```bash
-export ANTHROPIC_API_KEY=...
-```
-
-The provider env vars are `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `OPENROUTER_API_KEY`, and `TOGETHER_API_KEY`.
-
-> **Note.** `OpenAICompatibleEchoProvider` defaults its env-var lookup to `OPENAI_API_KEY`. Against Together / Groq / vLLM pass `api_key_env_var="TOGETHER_API_KEY"` (or whichever name fits) explicitly. The example below already does this.
+Providers read their keys from the environment. Put them in a `.env` file (copy `.env.example` and fill in the providers you use). Loading the file is the caller's job (for example with `python-dotenv`).
 
 ## Minimal example
 
