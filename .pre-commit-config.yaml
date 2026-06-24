@@ -3,7 +3,9 @@ repos:
     rev: v6.0.0
     hooks:
       - id: trailing-whitespace
+        exclude: '\.ipynb$'
       - id: end-of-file-fixer
+        exclude: '\.ipynb$'
       - id: check-yaml
       - id: check-toml
       - id: check-added-large-files

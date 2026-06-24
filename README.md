@@ -15,7 +15,7 @@
 [![Read the Docs](https://readthedocs.org/projects/xains/badge/?version=latest)](https://xains.readthedocs.io/en/latest/)
 -->
 
-`xains` generates explainable AI (XAI) Narratives - hence the name. It turns technical XAI outputs, e.g. SHAP or LIME attributions and counterfactuals, into clear natural-language narrative that makes the explanation of the model's decision understandable to a broad audience. 
+`xains` generates explainable AI (XAI) Narratives - hence the name. It turns technical XAI outputs, e.g. SHAP or LIME attributions and counterfactuals, into clear natural-language narrative that makes the explanation of the model's decision understandable to a broad audience.
 
 ## Installation
 `xains` is intended to work with **Python 3.11 and above**.
@@ -32,7 +32,7 @@ uv add xains
 
 ## Quickstart
 
-Imaging a classifier flagged this applicant as a likely default. The raw feature importances (for example from SHAP) are: `{debt_to_income: +0.37, salary: -0.21, age: -0.12}`. Fine, is this explanation understandable to broad audience? `xains` turns that explanations into a narrative. 
+Imaging a classifier flagged this applicant as a likely default. The raw feature importances (for example from SHAP) are: `{debt_to_income: +0.37, salary: -0.21, age: -0.12}`. Fine, is this explanation understandable to broad audience? `xains` turns that explanations into a narrative.
 
 `xains` needs three things: a `schema` (what the features and target mean), a `request` (this instance plus its importances), and an `explainer` (which model verbalizes it).
 
