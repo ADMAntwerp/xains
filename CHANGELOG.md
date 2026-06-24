@@ -197,6 +197,9 @@ While `0.y.z`, minor versions may contain breaking changes.
   `python-dotenv>=1.0`, plus a tracked `.env.example` at the repo root.
   The library does not call `load_dotenv()` itself; callers opt in when
   they want it. Core deps remain pydantic-only. ADR 0027.
+- Python 3.14 added to the supported / tested matrix. CI now runs across
+  3.11, 3.12, 3.13, and 3.14; the `Programming Language :: Python :: 3.14`
+  trove classifier is published. `requires-python = ">=3.11"` is unchanged.
 
 ### Changed
 
