@@ -46,22 +46,22 @@ def _narr_full() -> NarrativityGrades:
 
 def test_render_extraction_arrows_match_each_scored_field() -> None:
     out = render_grades(extraction=_ext_full())
-    assert "sign_faithfulness ↑:" in out
-    assert "value_faithfulness ↑:" in out
-    assert "rank_correlation ↑:" in out
-    assert "coverage ↑:" in out
-    assert "hallucination_count ↓:" in out
+    assert "sign_faithfulness ↑: 1.00" in out
+    assert "value_faithfulness ↑: 1.00" in out
+    assert "rank_correlation ↑: 1.00" in out
+    assert "coverage ↑: 1.00" in out
+    assert "hallucination_count ↓: 0" in out
 
 
 def test_render_narrativity_arrows_match_each_scored_field() -> None:
     out = render_grades(narrativity=_narr_full())
-    assert "csr ↑:" in out
-    assert "fdr ↑:" in out
-    assert "dcpr ↓:" in out
-    assert "ccpr ↓:" in out
-    assert "cecpr ↓:" in out
-    assert "ttcpr ↓:" in out
-    assert "vcpr ↓:" in out
+    assert "csr ↑: 0.27" in out
+    assert "fdr ↑: 0.29" in out
+    assert "dcpr ↓: 1.30" in out
+    assert "ccpr ↓: 203.14" in out
+    assert "cecpr ↓: 29252.68" in out
+    assert "ttcpr ↓: 2.29" in out
+    assert "vcpr ↓: 50.79" in out
 
 
 def test_render_narrativity_auxiliaries_have_no_arrow() -> None:
@@ -142,13 +142,13 @@ def test_scored_only_hides_narrativity_auxiliaries() -> None:
 
 def test_scored_only_keeps_scored_narrativity_metrics_with_arrows() -> None:
     out = render_grades(narrativity=_narr_full(), scored_only=True)
-    assert "csr ↑:" in out
-    assert "fdr ↑:" in out
-    assert "dcpr ↓:" in out
-    assert "ccpr ↓:" in out
-    assert "cecpr ↓:" in out
-    assert "ttcpr ↓:" in out
-    assert "vcpr ↓:" in out
+    assert "csr ↑: 0.27" in out
+    assert "fdr ↑: 0.29" in out
+    assert "dcpr ↓: 1.30" in out
+    assert "ccpr ↓: 203.14" in out
+    assert "cecpr ↓: 29252.68" in out
+    assert "ttcpr ↓: 2.29" in out
+    assert "vcpr ↓: 50.79" in out
 
 
 def test_scored_only_default_false_still_renders_auxiliaries() -> None:
@@ -161,3 +161,25 @@ def test_scored_only_on_extraction_is_a_noop_visually() -> None:
     plain = render_grades(extraction=_ext_full())
     filtered = render_grades(extraction=_ext_full(), scored_only=True)
     assert plain == filtered
+
+
+# ------------------------------------------------------ value formatting (2dp)
+
+
+def test_int_metric_renders_as_int_not_as_float() -> None:
+    """hallucination_count and n_sentences are ints; rendering must not add decimals."""
+    ext_out = render_grades(extraction=_ext_full())
+    assert "hallucination_count ↓: 0" in ext_out
+    assert "hallucination_count ↓: 0.00" not in ext_out
+
+    narr_out = render_grades(narrativity=_narr_full())
+    assert "n_sentences: 9" in narr_out
+    assert "n_sentences: 9.00" not in narr_out
+
+
+def test_float_metric_renders_to_exactly_two_decimals() -> None:
+    """Floats round to 2 decimals: 0.007 -> 0.01, 26.6 -> 26.60, 1.30 -> 1.30."""
+    out = render_grades(narrativity=_narr_full())
+    assert "cer: 0.01" in out
+    assert "ppl_ordered: 26.60" in out
+    assert "dcpr ↓: 1.30" in out

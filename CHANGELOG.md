@@ -12,6 +12,7 @@ While `0.y.z`, minor versions may contain breaking changes.
 ### Changed
 
 - README: install via pip/uv, .env setup documented, scope note on attribution methods, three new badges, and minimal-example XAIN framing.
+- `render_grades` formats metric floats to 2 decimals (`f"{value:.2f}"`); ints and `None` are unchanged.
 
 ## [0.1.0] - 2026-06-23
 

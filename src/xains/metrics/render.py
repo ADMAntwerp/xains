@@ -61,5 +61,6 @@ def _render_section(
             continue
         arrow = directions.get(field, "")
         marker = f" {arrow}" if arrow else ""
-        lines.append(f"  {field}{marker}: {value}")
+        rendered = f"{value:.2f}" if isinstance(value, float) else str(value)
+        lines.append(f"  {field}{marker}: {rendered}")
     return "\n".join(lines)
