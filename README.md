@@ -1,6 +1,6 @@
 # `xains`
 
-[![PyPI version](https://img.shields.io/pypi/v/xains.svg)](https://pypi.org/project/xains/)
+[![PyPI version](https://badge.fury.io/py/xains.svg)](https://badge.fury.io/py/xains)
 [![License: MIT](https://img.shields.io/badge/License-MIT-brightgreen.svg)](https://opensource.org/licenses/MIT)
 [![Tests](https://github.com/ADMAntwerp/xains/actions/workflows/ci.yml/badge.svg)](https://github.com/ADMAntwerp/xains/actions/workflows/ci.yml)
 
@@ -15,23 +15,26 @@
 [![Read the Docs](https://readthedocs.org/projects/xains/badge/?version=latest)](https://xains.readthedocs.io/en/latest/)
 -->
 
-`xains` generates explainable AI (XAI) narratives - hence the name. It turns technical XAI outputs such as SHAP attributions and counterfactuals into clear natural-language explanations that make model decisions understandable to a broad audience. The feature-importance input can come from any method producing a signed per-feature scalar (SHAP, LIME, permutation importance, integrated gradients, sklearn feature_importances_, and so on); xains does not compute attributions, it consumes whatever you provide.
+`xains` generates explainable AI (XAI) Narratives - hence the name. It turns technical XAI outputs, e.g. SHAP or LIME attributions and counterfactuals, into clear natural-language narrative that makes the explanation of the model's decision understandable to a broad audience. 
 
 ## Installation
-
-```bash
+`xains` is intended to work with **Python 3.11 and above**.
+Installation can be done via `pip` :
+```sh
 pip install xains
 ```
 
-Or with [uv](https://docs.astral.sh/uv/):
+Or via `uv` :
 
-```bash
+```sh
 uv add xains
 ```
 
-## Minimal example
+## Quickstart
 
-A classifier flagged this applicant as a likely default. The raw feature importances (for example from SHAP) look like `{debt_to_income: +0.37, salary: -0.21, age: -0.12}`. Accurate, but not something you would show a loan applicant. xains turns that into a sentence. To do it we prepare three things: a `schema` (what the features and target mean), a `request` (this instance plus its importances), and an `explainer` (which model verbalizes it).
+Imaging a classifier flagged this applicant as a likely default. The raw feature importances (for example from SHAP) are: `{debt_to_income: +0.37, salary: -0.21, age: -0.12}`. Fine, is this explanation understandable to broad audience? `xains` turns that explanations into a narrative. 
+
+`xains` needs three things: a `schema` (what the features and target mean), a `request` (this instance plus its importances), and an `explainer` (which model verbalizes it).
 
 ```python
 import xains
@@ -95,11 +98,9 @@ against default, they ultimately prove insufficient to offset the debt burden
 weighing on your financial stability.
 ```
 
-(Illustrative; LLM responses vary run-to-run.)
-
 ### Scoring the narrative
 
-A narrative is only useful if it is faithful to the attributions and reads well. xains scores both. `grade_extraction` checks the claims the narrative makes against the input attributions - sign, value, and rank fidelity, coverage, and hallucination count:
+A narrative is only useful if it is faithful to the attributions and reads well. `xains` scores both. `grade_extraction` checks the claims the narrative makes against the input attributions - sign, value, and rank fidelity, coverage, and hallucination count:
 
 ```python
 grades = xains.grade_extraction(
@@ -150,15 +151,13 @@ Narrativity
 
 These are the seven Cedro & Martens 2026 narrativity metrics. `scored_only=True` hides the nine auxiliary primitives (`ppl_ordered`, `ttr`, `n_sentences`, ...) which `grade_narrativity` also captures for paper replication; omit the flag to see them.
 
-### API keys
-
-The remote LLM providers need API keys (set them in your environment or a `.env` file; see `.env.example`).
-
 ### End-to-end notebook
 
 For the full pipeline (load German Credit, train a RandomForest, compute SHAP, generate the narrative, extract structured claims, and score on faithfulness and narrativity), see the tutorial in [`notebooks/01_quickstart.ipynb`](notebooks/01_quickstart.ipynb).
 
-See `docs/design.md` for the full design and `docs/decisions/` for recorded architecture decisions.
+### API keys
+
+The remote LLM providers need API keys (set them in your environment or a `.env` file; see `.env.example`).
 
 ## Choosing a model
 
@@ -184,8 +183,6 @@ llm = xains.OpenAICompatibleProvider(
     max_tokens=512,
 )
 ```
-
-Each reads its API key from the named env var (or pass `api_key=` explicitly); drop any of them into `xains.LLMNarrativeGenerator(llm=...)` exactly as the Minimal example does.
 
 ## License
 
