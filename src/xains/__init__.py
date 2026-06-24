@@ -5,6 +5,8 @@ See :mod:`xains.schema`, :mod:`xains.types`, and
 for the architectural overview.
 """
 
+from importlib.metadata import PackageNotFoundError, version
+
 from xains.config import ExplanationConfig
 from xains.explainer import Explainer
 from xains.generation import (
@@ -76,7 +78,10 @@ from xains.types import (
     TokenContribution,
 )
 
-__version__ = "0.0.1"
+try:
+    __version__ = version("xains")
+except PackageNotFoundError:
+    __version__ = "0.0.0+unknown"
 
 __all__ = [
     "AnthropicProvider",
