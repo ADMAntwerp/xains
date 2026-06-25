@@ -9,14 +9,10 @@ the changed-features beneath. Tabular only. See ADR 0029.
 
 from xains._substitution import substitute
 from xains.config import ExplanationConfig
-from xains.counterfactuals import changed_features
+from xains.counterfactuals import build_scenarios
 from xains.prompts.base import PromptTemplate
 from xains.schema import DatasetSchema
-from xains.types import (
-    ExplanationRequest,
-    TabularCounterfactual,
-    TabularExplanationRequest,
-)
+from xains.types import ExplanationRequest, TabularExplanationRequest
 
 DEFAULT_SYSTEM_TEMPLATE = (
     "You are explaining a model prediction for the '{target_name}' target "
@@ -107,58 +103,24 @@ class CounterfactualTabularPromptTemplate(PromptTemplate):
                 f"got {type(request).__name__}."
             )
 
-        if request.counterfactuals is None:
-            raise ValueError(
-                "CounterfactualTabularPromptTemplate requires request.counterfactuals; "
-                "none were provided."
-            )
-
-        for cf in request.counterfactuals:
-            if not isinstance(cf, TabularCounterfactual):
-                raise TypeError(
-                    f"CounterfactualTabularPromptTemplate requires every counterfactual to be "
-                    f"tabular, got {type(cf).__name__}."
-                )
-
-        factual_class = request.prediction.predicted_class
-        if factual_class not in schema.target.classes:
-            raise ValueError(
-                f"Prediction predicted_class={factual_class!r} is not in schema.target.classes."
-            )
-        factual_label = schema.target.classes[factual_class]
-
-        feature_names = {f.name for f in (schema.features or [])}
-        numbered = len(request.counterfactuals) > 1
+        scenarios = build_scenarios(request, schema)
+        # scenarios is non-empty: request.counterfactuals has min_length=1.
+        factual_label = scenarios[0].factual_label
+        numbered = len(scenarios) > 1
 
         scenario_blocks: list[str] = []
-        for idx, cf in enumerate(request.counterfactuals, start=1):
-            assert isinstance(cf, TabularCounterfactual)  # narrowed above
-            if cf.predicted_class not in schema.target.classes:
-                raise ValueError(
-                    f"Counterfactual predicted_class={cf.predicted_class!r} is not in "
-                    f"schema.target.classes."
-                )
-            cf_label = schema.target.classes[cf.predicted_class]
-
-            changes = changed_features(request.features, cf)
-            for chg in changes:
-                if chg.name not in feature_names:
-                    raise ValueError(
-                        f"Counterfactual references unknown feature {chg.name!r}; "
-                        f"not in schema.features."
-                    )
-
-            prefix = f"Scenario {idx}: " if numbered else ""
+        for sc in scenarios:
+            prefix = f"Scenario {sc.index}: " if numbered else ""
             method_suffix = ""
-            if self._include_method and cf.method is not None:
-                method_suffix = f" (method: {cf.method})"
+            if self._include_method and sc.method is not None:
+                method_suffix = f" (method: {sc.method})"
 
             lead = (
-                f"{prefix}To change the prediction from {factual_label} to "
-                f"{cf_label}:{method_suffix}"
+                f"{prefix}To change the prediction from {sc.factual_label} to "
+                f"{sc.cf_label}:{method_suffix}"
             )
             change_lines = []
-            for chg in changes:
+            for chg in sc.changes:
                 feat = schema.feature(chg.name)
                 unit = f" [{feat.unit}]" if feat.unit else ""
                 change_lines.append(f"  - {chg.name}: {chg.before} -> {chg.after}{unit}")
@@ -173,7 +135,7 @@ class CounterfactualTabularPromptTemplate(PromptTemplate):
             "tone": config.tone,
             "max_length_words": str(config.max_length_words),
             "narrative_rules": config.narrative_rules,
-            "prediction": str(factual_label),
+            "prediction": factual_label,
             "counterfactuals": counterfactuals_block,
         }
         values.update(self._extra)

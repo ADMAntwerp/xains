@@ -207,3 +207,76 @@ def test_explain_raises_when_extract_narrative_true_and_judge_llm_none(
     )
     with pytest.raises(ValueError, match=r"extract_narrative=True requires judge_llm"):
         explainer.explain(tabular_request)
+
+
+# ---------------------------------------------------------------- #
+# End-to-end counterfactual mode (ADR 0030)                        #
+# ---------------------------------------------------------------- #
+
+
+def test_counterfactual_mode_through_templated_generator(
+    tabular_schema: DatasetSchema,
+) -> None:
+    """Full Explainer.explain() through the templated CF path: no LLM, deterministic prose."""
+    from xains import TemplatedCounterfactualGenerator
+
+    req = TabularExplanationRequest(
+        features={"age": 29, "dti": 0.41},
+        prediction=Prediction(predicted_class=1, probabilities={0: 0.2, 1: 0.8}),
+        contributions=[TabularContribution(name="dti", value=0.41, importance=0.37)],
+        counterfactuals=[
+            TabularCounterfactual(predicted_class=0, features={"age": 29, "dti": 0.20}),
+        ],
+    )
+    explainer = Explainer(
+        schema=tabular_schema,
+        generator=TemplatedCounterfactualGenerator(),
+        config=ExplanationConfig(mode="counterfactual", extract_narrative=False),
+    )
+
+    result = explainer.explain(req)
+
+    assert result.mode == "counterfactual"
+    assert result.text == (
+        "To change the prediction from Defaulted to Repaid, "
+        "dti would need to change from 0.41 to 0.2."
+    )
+    # Templated path: LLM-only audit fields are None.
+    assert result.prompt is None
+    assert result.model_name is None
+    assert result.raw_llm_response is None
+
+
+def test_counterfactual_mode_through_llm_path(
+    tabular_schema: DatasetSchema,
+) -> None:
+    """Full Explainer.explain() through the LLM CF path: MockLLMProvider + CF prompt template."""
+    from xains.prompts import CounterfactualTabularPromptTemplate
+
+    req = TabularExplanationRequest(
+        features={"age": 29, "dti": 0.41},
+        prediction=Prediction(predicted_class=1, probabilities={0: 0.2, 1: 0.8}),
+        contributions=[TabularContribution(name="dti", value=0.41, importance=0.37)],
+        counterfactuals=[
+            TabularCounterfactual(predicted_class=0, features={"age": 29, "dti": 0.20}),
+        ],
+    )
+    llm = MockLLMProvider(responses=["The applicant could have repaid by lowering DTI."])
+    explainer = Explainer(
+        schema=tabular_schema,
+        generator=LLMNarrativeGenerator(
+            prompt_template=CounterfactualTabularPromptTemplate(),
+            llm=llm,
+        ),
+        config=ExplanationConfig(mode="counterfactual", extract_narrative=False),
+    )
+
+    result = explainer.explain(req)
+
+    assert result.mode == "counterfactual"
+    assert result.text == "The applicant could have repaid by lowering DTI."
+    # LLM path: prompt + model_name populated.
+    assert result.prompt is not None
+    assert "To change the prediction from Defaulted to Repaid:" in result.prompt
+    assert "  - dti: 0.41 -> 0.2" in result.prompt
+    assert result.model_name == "mock-v0"

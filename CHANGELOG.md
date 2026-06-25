@@ -11,6 +11,14 @@ While `0.y.z`, minor versions may contain breaking changes.
 
 ### Added
 
+- `build_scenarios` + `CounterfactualScenario` (in `xains.counterfactuals`):
+  the single source of truth for per-counterfactual scenario data (flip
+  labels, changed features, order). `CounterfactualTabularPromptTemplate`
+  now consumes it (output unchanged). `TemplatedCounterfactualGenerator`
+  (in `xains.generation`): LLM-free counterfactual narratives, mirroring
+  `TemplatedNarrativeGenerator`. End-to-end `mode="counterfactual"` tests
+  through `Explainer.explain()` for both the templated and LLM paths.
+  ADR 0030.
 - `xains.counterfactuals.changed_features(factual, cf)` and the
   `ChangedFeature(name, before, after)` model. Pure function over a factual
   dict and a `TabularCounterfactual`; honors `cf.changed_features` as an

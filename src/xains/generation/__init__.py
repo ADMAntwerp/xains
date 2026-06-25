@@ -7,6 +7,7 @@ from xains.generation.templated import (
     DEFAULT_LEAD_TEMPLATE,
     TemplatedNarrativeGenerator,
 )
+from xains.generation.templated_counterfactual import TemplatedCounterfactualGenerator
 
 __all__ = [
     "DEFAULT_CLAUSE_TEMPLATE",
@@ -14,5 +15,6 @@ __all__ = [
     "GenerationResult",
     "LLMNarrativeGenerator",
     "NarrativeGenerator",
+    "TemplatedCounterfactualGenerator",
     "TemplatedNarrativeGenerator",
 ]

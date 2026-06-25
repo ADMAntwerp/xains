@@ -13,6 +13,7 @@ from xains.generation import (
     GenerationResult,
     LLMNarrativeGenerator,
     NarrativeGenerator,
+    TemplatedCounterfactualGenerator,
     TemplatedNarrativeGenerator,
 )
 from xains.guardrails import FeatureClaim, GuardrailResult, NarrativeExtraction
@@ -125,6 +126,7 @@ __all__ = [
     "TabularCounterfactual",
     "TabularExplanationRequest",
     "TargetSchema",
+    "TemplatedCounterfactualGenerator",
     "TemplatedNarrativeGenerator",
     "TextCounterfactual",
     "TextExplanationRequest",
