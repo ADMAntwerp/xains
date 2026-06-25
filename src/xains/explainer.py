@@ -19,8 +19,12 @@ import warnings
 
 from xains.config import ExplanationConfig
 from xains.generation.base import NarrativeGenerator
-from xains.guardrails import extract_narrative_claims
-from xains.guardrails.types import GuardrailResult, NarrativeExtraction
+from xains.guardrails import extract_counterfactual_claims, extract_narrative_claims
+from xains.guardrails.types import (
+    CounterfactualExtraction,
+    GuardrailResult,
+    NarrativeExtraction,
+)
 from xains.providers.base import LLMProvider
 from xains.schema import DatasetSchema
 from xains.types import (
@@ -61,6 +65,7 @@ class Explainer:
             list(gen.guardrails) if gen.guardrails is not None else None
         )
         narrative_extraction: NarrativeExtraction | None = None
+        counterfactual_extraction: CounterfactualExtraction | None = None
         guardrail_tokens_used: dict[str, int] | None = None
 
         if (
@@ -74,16 +79,33 @@ class Explainer:
                     "to Explainer(...). Pass an LLMProvider as judge_llm, or "
                     "set ExplanationConfig(extract_narrative=False)."
                 )
-            extraction, judge_response, failure = extract_narrative_claims(
-                gen.text, request, self.schema, self.judge_llm
-            )
-            guardrail_tokens_used = judge_response.tokens_used
-            if extraction is not None:
-                narrative_extraction = extraction
-            if failure is not None:
-                if guardrails is None:
-                    guardrails = []
-                guardrails.append(failure)
+            # Dispatch extraction by mode (ADR 0033). The "feature_importance_counterfactual"
+            # hybrid mode falls through to the FI branch (unchanged) - no library-provided
+            # hybrid generator exists, so a hybrid request reaches here only when the user
+            # paired a single-mode generator with the hybrid config, and FI extraction is
+            # the closest correct behavior.
+            if mode == "counterfactual":
+                cf_extraction, judge_response, failure = extract_counterfactual_claims(
+                    gen.text, request, self.schema, self.judge_llm
+                )
+                guardrail_tokens_used = judge_response.tokens_used
+                if cf_extraction is not None:
+                    counterfactual_extraction = cf_extraction
+                if failure is not None:
+                    if guardrails is None:
+                        guardrails = []
+                    guardrails.append(failure)
+            else:  # "feature_importance" or "feature_importance_counterfactual"
+                extraction, judge_response, failure = extract_narrative_claims(
+                    gen.text, request, self.schema, self.judge_llm
+                )
+                guardrail_tokens_used = judge_response.tokens_used
+                if extraction is not None:
+                    narrative_extraction = extraction
+                if failure is not None:
+                    if guardrails is None:
+                        guardrails = []
+                    guardrails.append(failure)
 
         return ExplanationResult(
             text=gen.text,
@@ -95,6 +117,7 @@ class Explainer:
             latency_ms=gen.latency_ms,
             guardrails=guardrails,
             narrative_extraction=narrative_extraction,
+            counterfactual_extraction=counterfactual_extraction,
             guardrail_tokens_used=guardrail_tokens_used,
         )
 

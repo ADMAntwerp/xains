@@ -214,9 +214,14 @@ class ExplanationResult(BaseModel):
     latency_ms: float | None = Field(default=None, ge=0.0)
     guardrails: "list[GuardrailResult] | None" = None
     narrative_extraction: "NarrativeExtraction | None" = None
+    counterfactual_extraction: "CounterfactualExtraction | None" = None
     guardrail_tokens_used: dict[str, int] | None = None
 
 
-from xains.guardrails.types import GuardrailResult, NarrativeExtraction  # noqa: E402
+from xains.guardrails.types import (  # noqa: E402
+    CounterfactualExtraction,
+    GuardrailResult,
+    NarrativeExtraction,
+)
 
 ExplanationResult.model_rebuild()

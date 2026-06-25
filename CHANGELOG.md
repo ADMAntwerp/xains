@@ -24,6 +24,13 @@ While `0.y.z`, minor versions may contain breaking changes.
 
 ### Added
 
+- `Explainer.explain()` now dispatches claim extraction by mode. With
+  `extract_narrative=True`, `mode="counterfactual"` runs
+  `extract_counterfactual_claims` and populates a new
+  `ExplanationResult.counterfactual_extraction` field; `mode="feature_importance"`
+  is unchanged. This fixes a latent bug where a counterfactual narrative was
+  parsed by the feature-importance extractor and scored as mostly
+  hallucinated. ADR 0033.
 - Counterfactual fidelity scoring. `extract_counterfactual_claims`
   (in `xains.guardrails`) turns a counterfactual narrative into structured
   per-feature before/after claims with schema resolution (ADR 0007), plus
