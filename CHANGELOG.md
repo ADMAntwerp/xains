@@ -24,6 +24,14 @@ While `0.y.z`, minor versions may contain breaking changes.
 
 ### Added
 
+- Counterfactual fidelity scoring. `extract_counterfactual_claims`
+  (in `xains.guardrails`) turns a counterfactual narrative into structured
+  per-feature before/after claims with schema resolution (ADR 0007), plus
+  an `invented` channel. Three metrics in `xains.metrics`: `change_fidelity`
+  (both before and after must match, strict), `cf_coverage`, and
+  `invented_features`. `grade_counterfactual` composes them into a flat
+  `CounterfactualGrades` aggregate with `COUNTERFACTUAL_GRADE_DIRECTIONS`;
+  `render_grades` gains a `counterfactual=` section. ADR 0032.
 - `build_scenarios` + `CounterfactualScenario` (in `xains.counterfactuals`):
   the single source of truth for per-counterfactual scenario data (flip
   labels, changed features, order). `CounterfactualTabularPromptTemplate`

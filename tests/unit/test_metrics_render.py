@@ -4,7 +4,12 @@ Arrows mark scored metrics only. Auxiliary primitives on NarrativityGrades
 render without arrows. See ADR 0024.
 """
 
-from xains import ExtractionGrades, NarrativityGrades, render_grades
+from xains import (
+    CounterfactualGrades,
+    ExtractionGrades,
+    NarrativityGrades,
+    render_grades,
+)
 
 # ------------------------------------------------------ helpers
 
@@ -183,3 +188,96 @@ def test_float_metric_renders_to_exactly_two_decimals() -> None:
     assert "cer: 0.01" in out
     assert "ppl_ordered: 26.60" in out
     assert "dcpr ↓: 1.30" in out
+
+
+# ====================================================== counterfactual section (ADR 0032)
+
+
+def _cf_full() -> CounterfactualGrades:
+    return CounterfactualGrades(
+        change_fidelity=0.75,
+        coverage=1.0,
+        invented_features=2,
+        prompt_version="1",
+    )
+
+
+def test_counterfactual_section_renders_header_and_arrowed_metrics() -> None:
+    out = render_grades(counterfactual=_cf_full())
+    assert "Counterfactual fidelity" in out
+    assert "change_fidelity ↑: 0.75" in out
+    assert "coverage ↑: 1.00" in out
+    assert "invented_features ↓: 2" in out
+
+
+def test_counterfactual_section_floats_formatted_to_two_decimals() -> None:
+    out = render_grades(counterfactual=_cf_full())
+    # change_fidelity is a float -> 2dp
+    assert "change_fidelity ↑: 0.75" in out
+    # coverage is a float -> 2dp (1.0 -> "1.00")
+    assert "coverage ↑: 1.00" in out
+
+
+def test_counterfactual_section_int_renders_as_int_not_float() -> None:
+    out = render_grades(counterfactual=_cf_full())
+    assert "invented_features ↓: 2" in out
+    assert "invented_features ↓: 2.00" not in out
+
+
+def test_counterfactual_section_renders_none_change_fidelity_as_none() -> None:
+    grades = CounterfactualGrades(
+        change_fidelity=None,
+        coverage=0.5,
+        invented_features=0,
+        prompt_version="1",
+    )
+    out = render_grades(counterfactual=grades)
+    assert "change_fidelity ↑: None" in out
+
+
+def test_counterfactual_section_omits_prompt_version() -> None:
+    out = render_grades(counterfactual=_cf_full())
+    assert "prompt_version" not in out
+
+
+def test_counterfactual_section_scored_only_is_a_noop_visually() -> None:
+    """All CounterfactualGrades fields are scored - scored_only has no visible effect."""
+    plain = render_grades(counterfactual=_cf_full())
+    filtered = render_grades(counterfactual=_cf_full(), scored_only=True)
+    assert plain == filtered
+
+
+def test_counterfactual_section_alone_does_not_emit_other_headers() -> None:
+    out = render_grades(counterfactual=_cf_full())
+    assert "Verbalization fidelity" not in out
+    assert "Narrativity" not in out
+
+
+# ====================================================== combined rendering
+
+
+def test_extraction_and_counterfactual_stack_in_order() -> None:
+    out = render_grades(extraction=_ext_full(), counterfactual=_cf_full())
+    assert "Verbalization fidelity" in out
+    assert "Counterfactual fidelity" in out
+    # Extraction comes before counterfactual.
+    assert out.index("Verbalization fidelity") < out.index("Counterfactual fidelity")
+
+
+def test_all_three_sections_stack_in_canonical_order() -> None:
+    """Order: Verbalization fidelity -> Counterfactual fidelity -> Narrativity."""
+    out = render_grades(
+        extraction=_ext_full(),
+        counterfactual=_cf_full(),
+        narrativity=_narr_full(),
+    )
+    ext_pos = out.index("Verbalization fidelity")
+    cf_pos = out.index("Counterfactual fidelity")
+    narr_pos = out.index("Narrativity")
+    assert ext_pos < cf_pos < narr_pos
+
+
+def test_counterfactual_and_narrativity_without_extraction_still_stack() -> None:
+    out = render_grades(counterfactual=_cf_full(), narrativity=_narr_full())
+    assert "Verbalization fidelity" not in out
+    assert out.index("Counterfactual fidelity") < out.index("Narrativity")

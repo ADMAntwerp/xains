@@ -24,6 +24,8 @@ from xains.guardrails import (
     NarrativeExtraction,
 )
 from xains.metrics import (
+    COUNTERFACTUAL_GRADE_DIRECTIONS,
+    CounterfactualGrades,
     DisabledProvider,
     ExtractionGrades,
     HuggingFacePerplexityProvider,
@@ -36,6 +38,7 @@ from xains.metrics import (
     csr,
     dcpr,
     fdr,
+    grade_counterfactual,
     grade_extraction,
     grade_narrativity,
     hallucination_count,
@@ -91,9 +94,11 @@ except PackageNotFoundError:
     __version__ = "0.0.0+unknown"
 
 __all__ = [
+    "COUNTERFACTUAL_GRADE_DIRECTIONS",
     "AnthropicProvider",
     "CounterfactualExtraction",
     "CounterfactualFeatureClaim",
+    "CounterfactualGrades",
     "DatasetSchema",
     "DisabledProvider",
     "EdgeContribution",
@@ -147,6 +152,7 @@ __all__ = [
     "csr",
     "dcpr",
     "fdr",
+    "grade_counterfactual",
     "grade_extraction",
     "grade_narrativity",
     "hallucination_count",

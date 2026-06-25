@@ -384,3 +384,51 @@ def test_invented_features_counts_invented_list() -> None:
 def test_invented_features_zero_when_none() -> None:
     extraction = _extraction()
     assert invented_features(extraction) == 0
+
+
+# ====================================================== ordinal dtype routes to equality
+
+
+def _ordinal_schema() -> DatasetSchema:
+    return DatasetSchema(
+        modality=Modality.TABULAR,
+        name="credit_risk",
+        description="Credit risk demo.",
+        target=TargetSchema(
+            name="default",
+            description="Default outcome.",
+            classes={0: "Repaid", 1: "Defaulted"},
+        ),
+        features=[
+            FeatureSchema(
+                name="income_band",
+                dtype="ordinal",
+                description="income tier",
+                categories=["low", "medium", "high"],
+            ),
+        ],
+    )
+
+
+def test_change_fidelity_ordinal_equality_correct() -> None:
+    """Ordinal must route to equality (its values are string category labels)."""
+    schema = _ordinal_schema()
+    req = _request({"income_band": "low"}, {"income_band": "high"})
+    extraction = _extraction(
+        changes={
+            "income_band": _claim("income_band", stated_before="low", stated_after="high"),
+        },
+    )
+    assert change_fidelity(extraction, req, schema) == 1.0
+
+
+def test_change_fidelity_ordinal_equality_incorrect() -> None:
+    schema = _ordinal_schema()
+    req = _request({"income_band": "low"}, {"income_band": "high"})
+    extraction = _extraction(
+        changes={
+            # Wrong category label -> incorrect.
+            "income_band": _claim("income_band", stated_before="low", stated_after="medium"),
+        },
+    )
+    assert change_fidelity(extraction, req, schema) == 0.0

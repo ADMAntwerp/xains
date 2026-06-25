@@ -2,27 +2,35 @@
 
 Arrows mark scored metrics only. Auxiliary primitives on ``NarrativityGrades``
 render without arrows (they are diagnostics). ``prompt_version`` is metadata
-and is omitted from the render. See ADR 0024 and ADR 0026.
+and is omitted from the render. See ADR 0024, ADR 0026, ADR 0032.
 """
 
 from pydantic import BaseModel
 
-from xains.metrics.grader import EXTRACTION_GRADE_DIRECTIONS, ExtractionGrades
+from xains.metrics.grader import (
+    COUNTERFACTUAL_GRADE_DIRECTIONS,
+    EXTRACTION_GRADE_DIRECTIONS,
+    CounterfactualGrades,
+    ExtractionGrades,
+)
 from xains.metrics.narrativity import NARRATIVITY_GRADE_DIRECTIONS, NarrativityGrades
 
 
 def render_grades(
     extraction: ExtractionGrades | None = None,
+    counterfactual: CounterfactualGrades | None = None,
     narrativity: NarrativityGrades | None = None,
     scored_only: bool = False,
 ) -> str:
-    """Render extraction and narrativity grades as a grouped, arrow-annotated block.
+    """Render extraction, counterfactual, and narrativity grades as a grouped block.
 
     Each scored metric renders as ``name <arrow>: value``; auxiliaries render as
     ``name: value``. When ``scored_only=True``, fields absent from the direction
     dict are omitted entirely (drops the 9 NarrativityGrades auxiliaries; no
-    visible effect on ExtractionGrades, whose fields are all scored). Returns
-    ``""`` when neither aggregate is supplied.
+    visible effect on ExtractionGrades or CounterfactualGrades, whose fields are
+    all scored). Sections render in canonical order
+    (Verbalization fidelity -> Counterfactual fidelity -> Narrativity) when
+    multiple aggregates are supplied. Returns ``""`` when no aggregate is supplied.
     """
     sections: list[str] = []
     if extraction is not None:
@@ -31,6 +39,15 @@ def render_grades(
                 "Verbalization fidelity",
                 extraction,
                 EXTRACTION_GRADE_DIRECTIONS,
+                scored_only=scored_only,
+            )
+        )
+    if counterfactual is not None:
+        sections.append(
+            _render_section(
+                "Counterfactual fidelity",
+                counterfactual,
+                COUNTERFACTUAL_GRADE_DIRECTIONS,
                 scored_only=scored_only,
             )
         )

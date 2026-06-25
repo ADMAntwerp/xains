@@ -36,11 +36,15 @@ def _is_numeric(x: object) -> bool:
 def _value_matches(stated: Any, ground: Any, dtype: FeatureDType) -> bool:
     """Compare a single (stated, ground) pair against a feature's dtype.
 
-    Numeric / ordinal: ``math.isclose`` with type guard. If either side is
-    not a real number (``None``, string, bool, ...), the claim is
-    incorrect, not an exception. Categorical / boolean / text: equality.
+    ``numeric``: ``math.isclose`` with type guard. If either side is not
+    a real number (``None``, string, bool, ...), the claim is incorrect,
+    not an exception. ``ordinal`` / ``categorical`` / ``boolean`` /
+    ``text``: equality. Ordinal joins the equality branch because the
+    schema (``FeatureSchema._categorical_requires_categories``) requires
+    ordinal features to carry ``categories: list[str]`` - their values
+    are category labels, not numbers.
     """
-    if dtype in ("numeric", "ordinal"):
+    if dtype == "numeric":
         if not _is_numeric(stated) or not _is_numeric(ground):
             return False
         return math.isclose(float(stated), float(ground), abs_tol=_ATOL, rel_tol=0.0)

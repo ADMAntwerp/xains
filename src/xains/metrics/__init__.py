@@ -16,7 +16,14 @@ from xains.metrics.fidelity import (
     sign_faithfulness,
     value_faithfulness,
 )
-from xains.metrics.grader import EXTRACTION_GRADE_DIRECTIONS, ExtractionGrades, grade_extraction
+from xains.metrics.grader import (
+    COUNTERFACTUAL_GRADE_DIRECTIONS,
+    EXTRACTION_GRADE_DIRECTIONS,
+    CounterfactualGrades,
+    ExtractionGrades,
+    grade_counterfactual,
+    grade_extraction,
+)
 from xains.metrics.narrativity import (
     NARRATIVITY_GRADE_DIRECTIONS,
     NarrativityGrades,
@@ -39,8 +46,10 @@ from xains.metrics.perplexity_hf import HuggingFacePerplexityProvider
 from xains.metrics.render import render_grades
 
 __all__ = [
+    "COUNTERFACTUAL_GRADE_DIRECTIONS",
     "EXTRACTION_GRADE_DIRECTIONS",
     "NARRATIVITY_GRADE_DIRECTIONS",
+    "CounterfactualGrades",
     "DisabledProvider",
     "ExtractionGrades",
     "HuggingFacePerplexityProvider",
@@ -55,6 +64,7 @@ __all__ = [
     "csr",
     "dcpr",
     "fdr",
+    "grade_counterfactual",
     "grade_extraction",
     "grade_narrativity",
     "hallucination_count",
