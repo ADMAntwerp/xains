@@ -9,6 +9,8 @@ While `0.y.z`, minor versions may contain breaking changes.
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-06-25
+
 ### Changed
 
 - README: install via pip/uv, .env setup documented, scope note on attribution methods, three new badges, and minimal-example XAIN framing.

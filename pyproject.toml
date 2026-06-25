@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "xains"
-version = "0.1.0"
+version = "0.1.1"
 description = "Explainable AI (XAI) narratives: turn technical XAI outputs into clear natural-language explanations."
 readme = "README.md"
 license = { text = "MIT" }
