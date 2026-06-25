@@ -9,6 +9,15 @@ While `0.y.z`, minor versions may contain breaking changes.
 
 ## [Unreleased]
 
+### Added
+
+- `xains.counterfactuals.changed_features(factual, cf)` and the
+  `ChangedFeature(name, before, after)` model. Pure function over a factual
+  dict and a `TabularCounterfactual`; honors `cf.changed_features` as an
+  explicit override else computes the diff; raises `ValueError` when a
+  reported key is absent from the factual. Tabular only this PR.
+  Foundation for counterfactual narrative templates. ADR 0028.
+
 ## [0.1.1] - 2026-06-25
 
 ### Changed
