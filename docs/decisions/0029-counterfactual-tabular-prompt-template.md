@@ -1,0 +1,46 @@
+# 0029. Counterfactual tabular prompt template
+
+Date: 2026-06-25
+Status: Accepted
+
+## Context
+ADR 0004 fixed the counterfactual payload shape (a list of pre-computed `TabularCounterfactual` instances; the library does not rank, filter, or reorder). ADR 0017 fixed the editable-template contract for `FeatureImportanceTabularPromptTemplate` (keyword-only `system_template` / `user_template` / `extra_placeholders`, one-pass `{identifier}` substitution, unknown-token ValueError, conflict-check against `_BUILTIN_NAMES`). ADR 0011 added `ExplanationConfig.narrative_rules`, injected into every narrative-generating template's system prompt. ADR 0028 added the `changed_features(factual, cf)` diff. The piece missing for `Explainer(config=ExplanationConfig(mode="counterfactual", ...))` to produce an LLM narrative is the prompt template itself. The previous commit landed the diff; this commit lands the LLM prompt template that consumes it.
+
+## Decision
+Add `xains.prompts.counterfactual_tabular.CounterfactualTabularPromptTemplate`, mirroring `FeatureImportanceTabularPromptTemplate`'s shape: subclass `PromptTemplate`, keyword-only constructor (`system_template`, `user_template`, `extra_placeholders`, plus one CF-specific knob, `include_method`), module-level `DEFAULT_SYSTEM_TEMPLATE` / `DEFAULT_USER_TEMPLATE`, `_BUILTIN_NAMES` frozenset with conflict-check, `render(request, schema, config) -> (system, user)` building a values dict and calling `substitute()` twice. The built-in placeholders are `{target_name}`, `{audience}`, `{tone}`, `{max_length_words}`, `{narrative_rules}` (same five as FI), `{prediction}` (factual class label), and `{counterfactuals}` (the joined scenario block). `render()` validates: request is a `TabularExplanationRequest` (else `TypeError`), `request.counterfactuals` is not `None` (else `ValueError`), every counterfactual is a `TabularCounterfactual` (else `TypeError` naming the offender; tabular-only this PR), the factual `predicted_class` and every CF `predicted_class` are in `schema.target.classes`, every changed-feature name is in `schema.features`. Scenarios are rendered in `request.counterfactuals` order with no ranking or filtering. A single counterfactual renders without numbering; multiple counterfactuals are numbered `Scenario 1`, `Scenario 2`, ... Each scenario's first line is the "flip" - `[Scenario N: ]To change the prediction from <factual_label> to <cf_label>:` - followed by one indented `  - <name>: <before> -> <after>[ [unit]]` line per changed feature. `include_method=True` (constructor default `False`) appends `" (method: <cf.method>)"` to the flip line when `cf.method` is non-`None`. Naming collision: the new module's `DEFAULT_SYSTEM_TEMPLATE` / `DEFAULT_USER_TEMPLATE` constants are not re-exported from `xains.prompts`. To avoid asymmetry, the existing FI constants are also de-exported from `xains.prompts` in this commit (breaking change relative to 0.1.1; pre-1.0, the bullet is in CHANGELOG `### Changed (BREAKING)`). Each template's defaults are now reached via its submodule: `from xains.prompts.feature_importance_tabular import DEFAULT_SYSTEM_TEMPLATE`, `from xains.prompts.counterfactual_tabular import DEFAULT_SYSTEM_TEMPLATE`. The class names `CounterfactualTabularPromptTemplate` and `FeatureImportanceTabularPromptTemplate` remain re-exported from `xains.prompts` (no collision).
+
+## Rationale
+- The CF template should be visibly the same shape as the FI template so users learn one contract. Mirror, not invent: identical constructor signature plus one CF-specific flag (`include_method`), identical built-in-placeholder pattern, identical substitute() call style.
+- ADR 0004 is explicit that the library does not reorder counterfactuals. The template iterates `request.counterfactuals` in the order given. No `top_k_counterfactuals` knob, no distance-based sort.
+- Lead with the flip ("To change the prediction from X to Y") because that is the question a counterfactual answers; listing changed features without the flip leaves the reader to infer the goal.
+- Numbering only when there are multiple counterfactuals avoids a noisy "Scenario 1: ..." for the common single-CF case. The threshold is `len(counterfactuals) > 1`, the only sensible cutoff.
+- `include_method` is off by default because most narratives should not name the upstream tool (DiCE / Wachter / ...) - that is provenance, not explanation. Opt-in keeps narratives method-agnostic by default; opt-out is available for paper-replication or debugging contexts.
+- Constants de-exported from package level: re-exporting two `DEFAULT_SYSTEM_TEMPLATE` symbols from the same package is impossible; renaming one (e.g. `FI_DEFAULT_SYSTEM_TEMPLATE`, `CF_DEFAULT_SYSTEM_TEMPLATE`) clutters the namespace and ages poorly when a third template is added. Submodule imports scale; the package-level re-export does not. Pre-1.0 hard cutover matches the precedent set by ADR 0009 / 0014 / 0023 / 0025.
+
+## Consequences
+- New module `src/xains/prompts/counterfactual_tabular.py` and new test module `tests/unit/test_prompts_counterfactual_tabular.py` (16 tests).
+- `src/xains/prompts/__init__.py` re-exports `CounterfactualTabularPromptTemplate` alongside the existing classes. `__all__` adds `"CounterfactualTabularPromptTemplate"` and loses `"DEFAULT_SYSTEM_TEMPLATE"` / `"DEFAULT_USER_TEMPLATE"`.
+- Notebook prose at cell `78b13f07` updated to point at the submodule import path. No notebook code change required (the code cells never imported the constants at package level).
+- No change to `Explainer` or `LLMNarrativeGenerator`. Users construct `LLMNarrativeGenerator(prompt_template=CounterfactualTabularPromptTemplate(...), llm=...)` and pass it as `generator=` to `Explainer`; the existing wiring runs unchanged.
+- Future text / image / graph counterfactual templates will follow this shape but are out of scope; each gets its own ADR when those modalities ship CF support.
+- The templated (LLM-free) counterfactual generator counterpart, analogous to `TemplatedNarrativeGenerator` for the FI path, is a separate decision and a separate commit; this commit covers the LLM prompt template only.
+
+## Rejected alternatives
+- **Pick the template by mode inside `Explainer`.** Rejected: the Explainer holds a `NarrativeGenerator`, which holds the template. Mode validation already lives in `_validate_mode`; auto-selecting the template would either require a `mode -> template` registry (new surface) or hardcoding constructor side-effects (opaque). Letting the caller construct the right template keeps the wiring local and inspectable.
+- **Verbalize counterfactuals as a flat bullet list with no flip lead.** Rejected: a counterfactual's whole point is "what would make the prediction change"; burying that under a list of value changes pushes the reader to reconstruct the question.
+- **Always number scenarios.** Rejected: noisy for the single-CF case. The cost of branching on `len > 1` is two lines of code; the readability win is real.
+- **`include_method=True` by default.** Rejected: tying the narrative to the upstream search algorithm crosses the verbalizer / attribution-source boundary in the wrong direction. Provenance is opt-in.
+- **Add a `top_k_counterfactuals` knob to `ExplanationConfig`.** Rejected: ADR 0004 is explicit that the library does not rank or filter counterfactuals. If a user wants only 3 of 10, they pre-filter before passing the list. Adding the knob invites the question "rank by what?" and lands the library back in the selection-policy business.
+- **Add a `top_k_changed_features` knob.** Rejected: CFs typically list few features (that is the whole point of a *minimal* counterfactual). When they do not, the upstream tool's choice is what to verbalize. Adding the knob would mean choosing a ranking (by absolute delta? by feature importance from a separate attribution? by alphabetical order?) and again push the library into a policy role.
+- **Co-exist both `DEFAULT_*_TEMPLATE` symbol pairs at the package level under prefixed names** (e.g. `FI_DEFAULT_SYSTEM_TEMPLATE`, `CF_DEFAULT_SYSTEM_TEMPLATE`). Rejected: prefixes encode the template name twice (once in the class, once in the constant), do not scale when a third template arrives, and break the symmetry of "each template owns its own defaults". Submodule imports are the honest path.
+- **Auto-pick `include_method` from `cf.method`** (show whenever `cf.method` is set). Rejected: removes user control and couples narrative content to upstream-tool metadata that the caller may have populated for provenance / debugging rather than for the LLM's eyes.
+
+## References
+- ADR 0001 - scope boundary (pydantic-only core; tabular-first).
+- ADR 0004 - counterfactual payload shape (order preserved; no ranking).
+- ADR 0011 - configurable narrative rules (`{narrative_rules}` placeholder shared across templates).
+- ADR 0017 - editable prompt templates (constructor contract this template mirrors).
+- ADR 0028 - `changed_features` diff (this template's diff source).
+- `src/xains/prompts/feature_importance_tabular.py` - the shape mirrored.
+- `src/xains/prompts/counterfactual_tabular.py` - this commit's module.
+- `tests/unit/test_prompts_counterfactual_tabular.py` - the 16 pinning tests.

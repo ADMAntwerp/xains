@@ -17,6 +17,25 @@ While `0.y.z`, minor versions may contain breaking changes.
   explicit override else computes the diff; raises `ValueError` when a
   reported key is absent from the factual. Tabular only this PR.
   Foundation for counterfactual narrative templates. ADR 0028.
+- `CounterfactualTabularPromptTemplate` (re-exported from `xains.prompts`).
+  Verbalizes `request.counterfactuals` in the order provided (no ranking,
+  per ADR 0004), leads with the prediction flip, lists changed-features as
+  `name: before -> after [unit]`. Single CF renders un-numbered; multiple
+  CFs are numbered `Scenario 1`, `Scenario 2`, .... `include_method=True`
+  appends `(method: <cf.method>)` when the CF carries that provenance
+  field; default is off. Editable per ADR 0017
+  (`system_template=` / `user_template=` / `extra_placeholders=`).
+  Tabular only this PR. ADR 0029.
+
+### Changed (BREAKING)
+
+- The `DEFAULT_SYSTEM_TEMPLATE` and `DEFAULT_USER_TEMPLATE` constants for
+  `FeatureImportanceTabularPromptTemplate` are no longer re-exported from
+  the `xains.prompts` package level (they would collide with the new
+  `CounterfactualTabularPromptTemplate` constants of the same names).
+  Import them from the submodule instead:
+  `from xains.prompts.feature_importance_tabular import DEFAULT_SYSTEM_TEMPLATE`.
+  ADR 0029.
 
 ## [0.1.1] - 2026-06-25
 
