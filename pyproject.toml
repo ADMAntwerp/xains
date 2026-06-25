@@ -118,6 +118,7 @@ ignore = []
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["N802"]  # allow snake_case mirrors of CamelCase in tests
 "src/xains/config.py" = ["E501"]  # DEFAULT_NARRATIVE_RULES is a verbatim multi-line paper-quote
+"src/xains/guardrails/extraction.py" = ["E501"]  # _CF_SYSTEM_PROMPT is a verbatim LLM-facing template
 
 [tool.ruff.format]
 quote-style = "double"

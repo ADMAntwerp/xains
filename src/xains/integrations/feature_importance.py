@@ -33,7 +33,7 @@ def from_feature_importance(
     importances: Mapping[str, float],
     prediction: Prediction,
     *,
-    counterfactuals: list[CounterfactualInstance] | None = None,
+    counterfactual: CounterfactualInstance | None = None,
     contrast_class: int | str | None = None,
     instance_id: str | None = None,
 ) -> TabularExplanationRequest:
@@ -71,7 +71,7 @@ def from_feature_importance(
         features=dict(features),
         prediction=prediction,
         contributions=contributions,
-        counterfactuals=counterfactuals,
+        counterfactual=counterfactual,
         contrast_class=contrast_class,
         instance_id=instance_id,
     )

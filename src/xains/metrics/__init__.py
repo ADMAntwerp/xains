@@ -5,6 +5,11 @@ The single I/O exception is the ``PerplexityProvider`` Protocol, gated
 behind explicit caller-supplied implementations.
 """
 
+from xains.metrics.counterfactual_fidelity import (
+    cf_coverage,
+    change_fidelity,
+    invented_features,
+)
 from xains.metrics.coverage import coverage, hallucination_count
 from xains.metrics.fidelity import (
     rank_correlation,
@@ -44,6 +49,8 @@ __all__ = [
     "PerplexityProvider",
     "ccpr",
     "cecpr",
+    "cf_coverage",
+    "change_fidelity",
     "coverage",
     "csr",
     "dcpr",
@@ -51,6 +58,7 @@ __all__ = [
     "grade_extraction",
     "grade_narrativity",
     "hallucination_count",
+    "invented_features",
     "rank_correlation",
     "readability",
     "render_grades",

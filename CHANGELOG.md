@@ -9,6 +9,19 @@ While `0.y.z`, minor versions may contain breaking changes.
 
 ## [Unreleased]
 
+### Changed (BREAKING)
+- A request now carries a single counterfactual, not a list. The field
+  `ExplanationRequest.counterfactuals: list[...]` is renamed to
+  `counterfactual: CounterfactualInstance | None`. One counterfactual may
+  change multiple features; passing several alternative counterfactuals is
+  no longer supported. `build_scenarios` returns a single
+  `CounterfactualScenario` (the `index` field is removed), the CF prompt
+  template drops scenario numbering and renames its `{counterfactuals}`
+  placeholder to `{counterfactual}`, the templated CF generator drops the
+  "Alternatively, " alternation, and the `from_feature_importance` adapter
+  takes `counterfactual=` instead of `counterfactuals=`. Supersedes the
+  list decision in ADR 0004. ADR 0031.
+
 ### Added
 
 - `build_scenarios` + `CounterfactualScenario` (in `xains.counterfactuals`):

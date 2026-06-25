@@ -136,7 +136,7 @@ def test_prediction_forwarded_unchanged() -> None:
     assert req.prediction is pred
 
 
-def test_counterfactuals_forwarded_unchanged() -> None:
+def test_counterfactual_forwarded_unchanged() -> None:
     cf = TabularCounterfactual(
         features={"age": 45},
         predicted_class=0,
@@ -145,11 +145,9 @@ def test_counterfactuals_forwarded_unchanged() -> None:
         features={"age": 29},
         importances={"age": 0.1},
         prediction=Prediction(predicted_class=1),
-        counterfactuals=[cf],
+        counterfactual=cf,
     )
-    assert req.counterfactuals is not None
-    assert len(req.counterfactuals) == 1
-    assert req.counterfactuals[0] is cf
+    assert req.counterfactual is cf
 
 
 def test_contrast_class_forwarded_unchanged() -> None:
@@ -181,5 +179,5 @@ def test_keyword_only_beyond_prediction() -> None:
             {"age": 29},
             {"age": 0.1},
             Prediction(predicted_class=1),
-            None,  # positional counterfactuals — must be keyword-only
+            None,  # positional counterfactual — must be keyword-only
         )

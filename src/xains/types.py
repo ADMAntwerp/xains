@@ -139,10 +139,17 @@ CounterfactualInstance = Annotated[
 
 
 class _BaseExplanationRequest(BaseModel):
+    """Base for per-instance explanation requests.
+
+    ``counterfactual`` carries a SINGLE pre-computed counterfactual (which
+    may itself change multiple features), not a list of alternatives. See
+    ADR 0031 (supersedes the list-of-instances decision in ADR 0004).
+    """
+
     model_config = ConfigDict(extra="forbid")
 
     prediction: Prediction
-    counterfactuals: list[CounterfactualInstance] | None = Field(default=None, min_length=1)
+    counterfactual: CounterfactualInstance | None = None
     contrast_class: int | str | None = None
     instance_id: str | None = None
 

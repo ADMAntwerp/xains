@@ -16,7 +16,13 @@ from xains.generation import (
     TemplatedCounterfactualGenerator,
     TemplatedNarrativeGenerator,
 )
-from xains.guardrails import FeatureClaim, GuardrailResult, NarrativeExtraction
+from xains.guardrails import (
+    CounterfactualExtraction,
+    CounterfactualFeatureClaim,
+    FeatureClaim,
+    GuardrailResult,
+    NarrativeExtraction,
+)
 from xains.metrics import (
     DisabledProvider,
     ExtractionGrades,
@@ -86,6 +92,8 @@ except PackageNotFoundError:
 
 __all__ = [
     "AnthropicProvider",
+    "CounterfactualExtraction",
+    "CounterfactualFeatureClaim",
     "DatasetSchema",
     "DisabledProvider",
     "EdgeContribution",

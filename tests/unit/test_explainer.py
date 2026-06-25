@@ -90,7 +90,7 @@ def test_explicit_counterfactual_without_cfs_raises(
         config=ExplanationConfig(mode="counterfactual"),
         judge_llm=llm,
     )
-    with pytest.raises(ValueError, match=r"requires request\.counterfactuals"):
+    with pytest.raises(ValueError, match=r"requires request\.counterfactual"):
         explainer.explain(tabular_request)
 
 
@@ -104,7 +104,7 @@ def test_explicit_feature_importance_counterfactual_without_counterfactuals_rais
         config=ExplanationConfig(mode="feature_importance_counterfactual"),
         judge_llm=llm,
     )
-    with pytest.raises(ValueError, match=r"requires request\.counterfactuals"):
+    with pytest.raises(ValueError, match=r"requires request\.counterfactual"):
         explainer.explain(tabular_request)
 
 
@@ -114,9 +114,9 @@ def test_explicit_feature_importance_ignores_counterfactuals(
     """Factual mode is always safe — extra inputs are allowed but not used."""
     req = tabular_request.model_copy(
         update={
-            "counterfactuals": [
-                TabularCounterfactual(predicted_class=0, features={"age": 29, "dti": 0.20})
-            ]
+            "counterfactual": TabularCounterfactual(
+                predicted_class=0, features={"age": 29, "dti": 0.20}
+            )
         }
     )
     llm = MockLLMProvider()
@@ -139,10 +139,11 @@ def test_cf_same_class_as_factual_warns(tabular_schema: DatasetSchema) -> None:
         features={"age": 29, "dti": 0.41},
         prediction=Prediction(predicted_class=1),
         contributions=[TabularContribution(name="dti", value=0.41, importance=0.3)],
-        counterfactuals=[
+        counterfactual=TabularCounterfactual(
             # Same predicted class as the factual — should warn.
-            TabularCounterfactual(predicted_class=1, features={"age": 29, "dti": 0.20})
-        ],
+            predicted_class=1,
+            features={"age": 29, "dti": 0.20},
+        ),
     )
     with pytest.warns(UserWarning, match="predicts the same class"):
         _explainer(tabular_schema).explain(req)
@@ -153,9 +154,7 @@ def test_cf_flipping_class_does_not_warn(tabular_schema: DatasetSchema) -> None:
         features={"age": 29, "dti": 0.41},
         prediction=Prediction(predicted_class=1),
         contributions=[TabularContribution(name="dti", value=0.41, importance=0.3)],
-        counterfactuals=[
-            TabularCounterfactual(predicted_class=0, features={"age": 29, "dti": 0.20})
-        ],
+        counterfactual=TabularCounterfactual(predicted_class=0, features={"age": 29, "dti": 0.20}),
     )
     import warnings
 
@@ -224,9 +223,7 @@ def test_counterfactual_mode_through_templated_generator(
         features={"age": 29, "dti": 0.41},
         prediction=Prediction(predicted_class=1, probabilities={0: 0.2, 1: 0.8}),
         contributions=[TabularContribution(name="dti", value=0.41, importance=0.37)],
-        counterfactuals=[
-            TabularCounterfactual(predicted_class=0, features={"age": 29, "dti": 0.20}),
-        ],
+        counterfactual=TabularCounterfactual(predicted_class=0, features={"age": 29, "dti": 0.20}),
     )
     explainer = Explainer(
         schema=tabular_schema,
@@ -257,9 +254,7 @@ def test_counterfactual_mode_through_llm_path(
         features={"age": 29, "dti": 0.41},
         prediction=Prediction(predicted_class=1, probabilities={0: 0.2, 1: 0.8}),
         contributions=[TabularContribution(name="dti", value=0.41, importance=0.37)],
-        counterfactuals=[
-            TabularCounterfactual(predicted_class=0, features={"age": 29, "dti": 0.20}),
-        ],
+        counterfactual=TabularCounterfactual(predicted_class=0, features={"age": 29, "dti": 0.20}),
     )
     llm = MockLLMProvider(responses=["The applicant could have repaid by lowering DTI."])
     explainer = Explainer(

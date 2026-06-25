@@ -1,10 +1,10 @@
-"""CounterfactualTabularPromptTemplate - verbalize tabular counterfactual scenarios.
+"""CounterfactualTabularPromptTemplate - verbalize the tabular counterfactual scenario.
 
 Mirrors :class:`FeatureImportanceTabularPromptTemplate`'s editable-template
-contract (ADR 0017). Renders one block per counterfactual in the order
-provided (ADR 0004: the library does not rank, filter, or reorder). Each
-block leads with the flip (factual label -> counterfactual label) and lists
-the changed-features beneath. Tabular only. See ADR 0029.
+contract (ADR 0017). Per ADR 0031 a request carries exactly one
+counterfactual, so the template renders one flip block (no numbering,
+no alternatives) consisting of the flip lead followed by the
+changed-feature lines. Tabular only. See ADR 0029.
 """
 
 from xains._substitution import substitute
@@ -16,8 +16,8 @@ from xains.types import ExplanationRequest, TabularExplanationRequest
 
 DEFAULT_SYSTEM_TEMPLATE = (
     "You are explaining a model prediction for the '{target_name}' target "
-    "by describing counterfactual scenarios: what would need to change about "
-    "this instance for the model to predict a different outcome. "
+    "by describing a counterfactual scenario: what would need to change "
+    "about this instance for the model to predict a different outcome. "
     "Audience: {audience}. Tone: {tone}. "
     "Keep the explanation under {max_length_words} words."
     "\n\n"
@@ -26,8 +26,8 @@ DEFAULT_SYSTEM_TEMPLATE = (
 
 DEFAULT_USER_TEMPLATE = (
     "Current prediction: {prediction}.\n"
-    "Counterfactual scenarios (what could change the outcome):\n"
-    "{counterfactuals}"
+    "Counterfactual scenario (what could change the outcome):\n"
+    "{counterfactual}"
 )
 
 _BUILTIN_NAMES = frozenset(
@@ -38,7 +38,7 @@ _BUILTIN_NAMES = frozenset(
         "max_length_words",
         "narrative_rules",
         "prediction",
-        "counterfactuals",
+        "counterfactual",
     }
 )
 
@@ -46,29 +46,31 @@ _BUILTIN_NAMES = frozenset(
 class CounterfactualTabularPromptTemplate(PromptTemplate):
     """Render a tabular counterfactual explanation prompt.
 
-    Verbalizes ``request.counterfactuals`` in the order provided (no ranking
-    or filtering). A single counterfactual renders without numbering;
-    multiple counterfactuals are numbered ``Scenario 1``, ``Scenario 2``, ....
+    Verbalizes ``request.counterfactual`` as a single flip block: a lead
+    line ("To change the prediction from <factual> to <cf>:") followed by
+    one indented ``  - name: before -> after [unit]`` line per changed
+    feature.
 
     Pass ``system_template=`` / ``user_template=`` to customize the prompt
     structure; both default to ``DEFAULT_SYSTEM_TEMPLATE`` /
-    ``DEFAULT_USER_TEMPLATE`` and reproduce the canonical layout byte-for-byte.
+    ``DEFAULT_USER_TEMPLATE`` and reproduce the canonical layout
+    byte-for-byte.
 
     Built-in placeholders: ``{target_name}``, ``{audience}``, ``{tone}``,
     ``{max_length_words}``, ``{narrative_rules}`` come from the schema and
     ExplanationConfig; ``{prediction}`` is the factual class label
     (``schema.target.classes[request.prediction.predicted_class]``);
-    ``{counterfactuals}`` is the joined scenario block.
+    ``{counterfactual}`` is the rendered scenario block.
 
-    ``include_method=True`` appends ``" (method: <cf.method>)"`` to each
-    scenario's flip line when the counterfactual carries a non-None
-    ``method`` string. Default is ``False`` to keep narratives
-    method-agnostic.
+    ``include_method=True`` appends ``" (method: <cf.method>)"`` to the
+    flip line when the counterfactual carries a non-``None`` ``method``
+    field. Default is ``False`` to keep narratives method-agnostic.
 
-    Pass ``extra_placeholders={"name": "value", ...}`` to declare additional
-    substitutions; extras may not overlap built-in names. An
-    identifier-shaped ``{token}`` in a template that is neither a built-in
-    nor in ``extra_placeholders`` raises ``ValueError`` at render time.
+    Pass ``extra_placeholders={"name": "value", ...}`` to declare
+    additional substitutions; extras may not overlap built-in names. An
+    identifier-shaped ``{token}`` in a template that is neither a
+    built-in nor in ``extra_placeholders`` raises ``ValueError`` at
+    render time.
     """
 
     def __init__(
@@ -103,31 +105,24 @@ class CounterfactualTabularPromptTemplate(PromptTemplate):
                 f"got {type(request).__name__}."
             )
 
-        scenarios = build_scenarios(request, schema)
-        # scenarios is non-empty: request.counterfactuals has min_length=1.
-        factual_label = scenarios[0].factual_label
-        numbered = len(scenarios) > 1
+        scenario = build_scenarios(request, schema)
+        factual_label = scenario.factual_label
 
-        scenario_blocks: list[str] = []
-        for sc in scenarios:
-            prefix = f"Scenario {sc.index}: " if numbered else ""
-            method_suffix = ""
-            if self._include_method and sc.method is not None:
-                method_suffix = f" (method: {sc.method})"
+        method_suffix = ""
+        if self._include_method and scenario.method is not None:
+            method_suffix = f" (method: {scenario.method})"
 
-            lead = (
-                f"{prefix}To change the prediction from {sc.factual_label} to "
-                f"{sc.cf_label}:{method_suffix}"
-            )
-            change_lines = []
-            for chg in sc.changes:
-                feat = schema.feature(chg.name)
-                unit = f" [{feat.unit}]" if feat.unit else ""
-                change_lines.append(f"  - {chg.name}: {chg.before} -> {chg.after}{unit}")
+        lead = (
+            f"To change the prediction from {scenario.factual_label} to "
+            f"{scenario.cf_label}:{method_suffix}"
+        )
+        change_lines = []
+        for chg in scenario.changes:
+            feat = schema.feature(chg.name)
+            unit = f" [{feat.unit}]" if feat.unit else ""
+            change_lines.append(f"  - {chg.name}: {chg.before} -> {chg.after}{unit}")
 
-            scenario_blocks.append("\n".join([lead, *change_lines]))
-
-        counterfactuals_block = "\n\n".join(scenario_blocks)
+        counterfactual_block = "\n".join([lead, *change_lines])
 
         values: dict[str, str] = {
             "target_name": schema.target.name,
@@ -136,7 +131,7 @@ class CounterfactualTabularPromptTemplate(PromptTemplate):
             "max_length_words": str(config.max_length_words),
             "narrative_rules": config.narrative_rules,
             "prediction": factual_label,
-            "counterfactuals": counterfactuals_block,
+            "counterfactual": counterfactual_block,
         }
         values.update(self._extra)
 

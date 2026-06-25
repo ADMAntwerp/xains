@@ -110,32 +110,32 @@ class Explainer:
             )
 
     def _validate_mode(self, request: ExplanationRequest) -> ExplanationMode:
-        has_cf = bool(request.counterfactuals)
+        has_cf = request.counterfactual is not None
         self._check_explicit_mode(self.config.mode, has_cf=has_cf)
         return self.config.mode
 
     @staticmethod
     def _check_explicit_mode(mode: ExplanationMode, *, has_cf: bool) -> None:
         if mode == "counterfactual" and not has_cf:
-            raise ValueError("config.mode='counterfactual' requires request.counterfactuals.")
+            raise ValueError("config.mode='counterfactual' requires request.counterfactual.")
         if mode == "feature_importance_counterfactual" and not has_cf:
             raise ValueError(
-                "config.mode='feature_importance_counterfactual' requires request.counterfactuals."
+                "config.mode='feature_importance_counterfactual' requires request.counterfactual."
             )
         # "feature_importance" has no prerequisites.
 
     @staticmethod
     def _warn_if_counterfactual_does_not_flip(request: ExplanationRequest) -> None:
         """A CF that predicts the same class as the factual is almost always a user bug."""
-        if not request.counterfactuals:
+        cf = request.counterfactual
+        if cf is None:
             return
         factual_class = request.prediction.predicted_class
-        for i, cf in enumerate(request.counterfactuals):
-            if cf.predicted_class == factual_class:
-                warnings.warn(
-                    f"Counterfactual #{i} predicts the same class "
-                    f"({factual_class!r}) as the factual. This is usually a "
-                    "user error — true counterfactuals flip the prediction.",
-                    UserWarning,
-                    stacklevel=3,
-                )
+        if cf.predicted_class == factual_class:
+            warnings.warn(
+                f"Counterfactual predicts the same class ({factual_class!r}) "
+                "as the factual. This is usually a user error — a true "
+                "counterfactual flips the prediction.",
+                UserWarning,
+                stacklevel=3,
+            )

@@ -97,13 +97,14 @@ class TestTabularExplanationRequest:
                 contributions=[NodeContribution(node_id="n1", importance=0.5)],
             )
 
-    def test_counterfactuals_must_be_non_empty_if_set(self) -> None:
+    def test_old_plural_counterfactuals_field_rejected(self) -> None:
+        """Per ADR 0031 the field is singular ``counterfactual`` (Optional[single])."""
         with pytest.raises(ValidationError):
             TabularExplanationRequest(
                 features={"x": 1},
                 prediction=Prediction(predicted_class=0),
                 contributions=[TabularContribution(name="x", value=1, importance=0.5)],
-                counterfactuals=[],
+                counterfactuals=[],  # type: ignore[call-arg]  # field no longer exists
             )
 
 
