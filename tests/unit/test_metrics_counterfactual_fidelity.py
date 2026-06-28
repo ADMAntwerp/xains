@@ -432,3 +432,50 @@ def test_change_fidelity_ordinal_equality_incorrect() -> None:
         },
     )
     assert change_fidelity(extraction, req, schema) == 0.0
+
+
+# ====================================================== numeric-string coercion (ADR 0034)
+
+
+def test_change_fidelity_numeric_string_stated_value_correct() -> None:
+    """A numeric value the extractor typed as a string still matches on value.
+
+    The extraction LLM may return a numeric feature's value as a JSON string
+    ("29", "0.20") rather than a number. The stated side is coerced, so a
+    correct value scores correct rather than failing on typing.
+    """
+    schema = _numeric_schema()
+    req = _request({"age": 29, "dti": 0.41}, {"age": 29, "dti": 0.20})
+    extraction = _extraction(
+        changes={"dti": _claim("dti", stated_before="0.41", stated_after="0.20")},
+    )
+    assert change_fidelity(extraction, req, schema) == 1.0
+
+
+def test_change_fidelity_numeric_string_with_whitespace_correct() -> None:
+    schema = _numeric_schema()
+    req = _request({"age": 29, "dti": 0.41}, {"age": 29, "dti": 0.20})
+    extraction = _extraction(
+        changes={"dti": _claim("dti", stated_before=" 0.41 ", stated_after=" 0.20 ")},
+    )
+    assert change_fidelity(extraction, req, schema) == 1.0
+
+
+def test_change_fidelity_numeric_string_wrong_value_incorrect() -> None:
+    """Coercion fixes typing, not correctness: a wrong numeric-string still fails."""
+    schema = _numeric_schema()
+    req = _request({"age": 29, "dti": 0.41}, {"age": 29, "dti": 0.20})
+    extraction = _extraction(
+        changes={"dti": _claim("dti", stated_before="0.41", stated_after="0.99")},
+    )
+    assert change_fidelity(extraction, req, schema) == 0.0
+
+
+def test_change_fidelity_non_numeric_string_still_incorrect() -> None:
+    """A non-numeric word ('low') does not coerce -> incorrect (unchanged behavior)."""
+    schema = _numeric_schema()
+    req = _request({"age": 29, "dti": 0.41}, {"age": 29, "dti": 0.20})
+    extraction = _extraction(
+        changes={"dti": _claim("dti", stated_before="0.41", stated_after="low")},
+    )
+    assert change_fidelity(extraction, req, schema) == 0.0

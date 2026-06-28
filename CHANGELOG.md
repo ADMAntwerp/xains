@@ -63,6 +63,13 @@ While `0.y.z`, minor versions may contain breaking changes.
   (`system_template=` / `user_template=` / `extra_placeholders=`).
   Tabular only this PR. ADR 0029.
 
+
+### Fixed
+- Counterfactual `change_fidelity` now coerces a stated numeric value that
+  the extractor returned as a string (e.g. `"3190"`) before comparison, so a
+  faithful narrative is not scored incorrect over the judge LLM's JSON typing.
+  Non-numeric strings and bools are unchanged (still incorrect). ADR 0034.
+
 ### Changed (BREAKING)
 
 - The `DEFAULT_SYSTEM_TEMPLATE` and `DEFAULT_USER_TEMPLATE` constants for

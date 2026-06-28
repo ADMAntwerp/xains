@@ -33,11 +33,36 @@ def _is_numeric(x: object) -> bool:
     return isinstance(x, int | float) and not isinstance(x, bool)
 
 
+def _coerce_stated_number(stated: Any) -> float | None:
+    """Coerce a stated value to float if it is a number or a numeric string.
+
+    The extraction LLM may return a numeric feature's value as a JSON string
+    ("3190") rather than a number (3190). Coercing the stated side lets the
+    numeric comparison succeed on value, not on the extractor's typing. Bools
+    are excluded; a non-numeric string ("low") yields None and so scores
+    incorrect, not an exception. Only the stated side is coerced - the ground
+    truth comes from build_scenarios off the feature values and is trusted to
+    be correctly typed.
+    """
+    if isinstance(stated, bool):
+        return None
+    if isinstance(stated, int | float):
+        return float(stated)
+    if isinstance(stated, str):
+        try:
+            return float(stated.strip())
+        except ValueError:
+            return None
+    return None
+
+
 def _value_matches(stated: Any, ground: Any, dtype: FeatureDType) -> bool:
     """Compare a single (stated, ground) pair against a feature's dtype.
 
-    ``numeric``: ``math.isclose`` with type guard. If either side is not
-    a real number (``None``, string, bool, ...), the claim is incorrect,
+    ``numeric``: ``math.isclose`` after coercing the stated side via
+    ``_coerce_stated_number`` (a numeric string like ``"3190"`` is accepted
+    on value). The ground side is trusted-typed and must be a real number.
+    A non-numeric stated value (``None``, ``"low"``, bool) is incorrect,
     not an exception. ``ordinal`` / ``categorical`` / ``boolean`` /
     ``text``: equality. Ordinal joins the equality branch because the
     schema (``FeatureSchema._categorical_requires_categories``) requires
@@ -45,9 +70,12 @@ def _value_matches(stated: Any, ground: Any, dtype: FeatureDType) -> bool:
     are category labels, not numbers.
     """
     if dtype == "numeric":
-        if not _is_numeric(stated) or not _is_numeric(ground):
+        if not _is_numeric(ground):
             return False
-        return math.isclose(float(stated), float(ground), abs_tol=_ATOL, rel_tol=0.0)
+        stated_num = _coerce_stated_number(stated)
+        if stated_num is None:
+            return False
+        return math.isclose(stated_num, float(ground), abs_tol=_ATOL, rel_tol=0.0)
     return bool(stated == ground)
 
 
