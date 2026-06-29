@@ -294,3 +294,88 @@ def test_wrong_top_level_shape_returns_advisory_failure() -> None:
     )
     assert extraction is None
     assert failure is not None
+
+
+# ====================================================== prompt canonicalization (ADR 0035)
+
+
+def test_cf_user_prompt_surfaces_categorical_allowed_values() -> None:
+    """The CF extraction prompt lists each categorical feature's allowed values
+    and instructs the judge to canonicalize stated values to them.
+    """
+    from xains.guardrails.extraction import _build_cf_user_prompt
+
+    schema = DatasetSchema(
+        modality=Modality.TABULAR,
+        name="credit_risk",
+        description="Credit risk demo.",
+        target=TargetSchema(
+            name="default",
+            description="Default outcome.",
+            classes={0: "Repaid", 1: "Defaulted"},
+        ),
+        features=[
+            FeatureSchema(
+                name="checking_status",
+                dtype="categorical",
+                description="checking account status",
+                categories=["<0", "0<=X<200", ">=200", "no checking"],
+            ),
+            FeatureSchema(name="age", dtype="numeric", description="age"),
+        ],
+    )
+    request = TabularExplanationRequest(
+        features={"checking_status": "<0", "age": 30},
+        prediction=Prediction(predicted_class=1),
+        contributions=[
+            TabularContribution(name="age", value=30, importance=0.1),
+        ],
+        counterfactual=TabularCounterfactual(
+            predicted_class=0, features={"checking_status": ">=200", "age": 30}
+        ),
+    )
+
+    prompt = _build_cf_user_prompt("some narrative", request, schema)
+
+    # Categorical feature surfaces its allowed values, including the labels.
+    assert "allowed values:" in prompt
+    assert "<0" in prompt and ">=200" in prompt and "no checking" in prompt
+    # The canonicalization instruction is present.
+    assert "closest allowed value" in prompt
+    # The numeric feature does not get an allowed-values suffix.
+    assert "age (numeric): age | allowed values" not in prompt
+
+
+def test_cf_user_prompt_no_allowed_values_when_no_categories() -> None:
+    """A schema with only numeric features renders no allowed-values suffix."""
+    from xains.guardrails.extraction import _build_cf_user_prompt
+
+    schema = DatasetSchema(
+        modality=Modality.TABULAR,
+        name="credit_risk",
+        description="Credit risk demo.",
+        target=TargetSchema(
+            name="default",
+            description="Default outcome.",
+            classes={0: "Repaid", 1: "Defaulted"},
+        ),
+        features=[
+            FeatureSchema(name="age", dtype="numeric", description="age"),
+            FeatureSchema(name="salary", dtype="numeric", description="salary"),
+        ],
+    )
+    request = TabularExplanationRequest(
+        features={"age": 30, "salary": 50000},
+        prediction=Prediction(predicted_class=1),
+        contributions=[
+            TabularContribution(name="age", value=30, importance=0.1),
+        ],
+        counterfactual=TabularCounterfactual(
+            predicted_class=0, features={"age": 45, "salary": 50000}
+        ),
+    )
+
+    prompt = _build_cf_user_prompt("some narrative", request, schema)
+    # No FEATURE LINE carries an allowed-values suffix (the task instruction may
+    # still mention the phrase; we assert on the per-feature suffix specifically).
+    assert "| allowed values:" not in prompt

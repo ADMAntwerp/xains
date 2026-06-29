@@ -65,6 +65,11 @@ While `0.y.z`, minor versions may contain breaking changes.
 
 
 ### Fixed
+- The counterfactual extraction prompt now lists each categorical or ordinal
+  feature's allowed values and instructs the judge LLM to canonicalize a
+  stated value to the closest allowed label, so a narrative phrase like
+  "under 100" is extracted as the schema's `<100` and matches ground truth.
+  ADR 0035.
 - Counterfactual `change_fidelity` now coerces a stated numeric value that
   the extractor returned as a string (e.g. `"3190"`) before comparison, so a
   faithful narrative is not scored incorrect over the judge LLM's JSON typing.

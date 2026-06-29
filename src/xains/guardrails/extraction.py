@@ -328,7 +328,10 @@ def _build_cf_user_prompt(
     if schema.features:
         for f in schema.features:
             unit = f" [{f.unit}]" if f.unit else ""
-            feature_lines.append(f"- {f.name} ({f.dtype}){unit}: {f.description}")
+            cats = ""
+            if f.categories:
+                cats = " | allowed values: " + ", ".join(f.categories)
+            feature_lines.append(f"- {f.name} ({f.dtype}){unit}: {f.description}{cats}")
     schema_block = "\n".join(feature_lines) if feature_lines else "(none)"
 
     label = schema.target.classes[request.prediction.predicted_class]
@@ -351,9 +354,15 @@ def _build_cf_user_prompt(
         "mentions. For each, capture the feature's stated `before` and "
         "`after` values (or null if the narrative does not state them) "
         'and any stated direction word (e.g. "increased", "decreased", '
-        '"changed"). Resolve each mention to a schema name from the '
-        "vocabulary above, or place it under `invented`. Return exactly "
-        "one JSON object matching the schema in the system prompt."
+        '"changed"). When a feature lists allowed values above, its '
+        "`before` and `after` must each be one of those exact allowed "
+        "values: map the narrative's wording to the closest allowed value "
+        "(for example, if the narrative says a balance is 'under 100' and "
+        "the allowed values include '<100', record '<100'). If the "
+        "narrative's wording matches no allowed value, record null. "
+        "Resolve each mention to a schema name from the vocabulary above, "
+        "or place it under `invented`. Return exactly one JSON object "
+        "matching the schema in the system prompt."
     )
 
 
