@@ -241,3 +241,18 @@ def test_extra_placeholders_substituted_into_custom_template() -> None:
         user_template="{counterfactual}\nRegion: {region}",
     ).render(req, schema, _config())
     assert "Region: EU" in user
+
+
+# ====================================================== before/after instruction (ADR 0036)
+
+
+def test_default_system_prompt_instructs_stating_before_and_after() -> None:
+    """The default CF system prompt tells the LLM to state each changed feature's
+    from-value and to-value explicitly, not to rephrase them.
+    """
+    schema = _schema()
+    req = _request_with(_cf({"age": 29, "salary": 80000, "dti": 0.41}))
+    system, _ = CounterfactualTabularPromptTemplate().render(req, schema, _config())
+    assert "the value it changes from" in system
+    assert "the value it changes to" in system
+    assert "exactly as written" in system

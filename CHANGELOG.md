@@ -65,6 +65,11 @@ While `0.y.z`, minor versions may contain breaking changes.
 
 
 ### Fixed
+- The default counterfactual generation prompt now instructs the LLM to state
+  each changed feature's from-value and to-value explicitly, using the values
+  as written rather than rephrasing them. This makes the narrative carry the
+  before-state and the canonical values, which the fidelity metrics score
+  against. ADR 0036.
 - The counterfactual extraction prompt now lists each categorical or ordinal
   feature's allowed values and instructs the judge LLM to canonicalize a
   stated value to the closest allowed label, so a narrative phrase like
