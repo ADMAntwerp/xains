@@ -151,9 +151,9 @@ Narrativity
 
 These are the seven Cedro & Martens 2026 narrativity metrics. `scored_only=True` hides the nine auxiliary primitives (`ppl_ordered`, `ttr`, `n_sentences`, ...) which `grade_narrativity` also captures for paper replication; omit the flag to see them.
 
-### End-to-end notebook
+### End-to-end notebooks
 
-For the full pipeline (load German Credit, train a RandomForest, compute SHAP, generate the narrative, extract structured claims, and score on faithfulness and narrativity), see the tutorial in [`notebooks/01_quickstart.ipynb`](notebooks/01_quickstart.ipynb).
+For the full pipeline (load German Credit, train a RandomForest, compute SHAP, generate the narrative, extract structured claims, and score on faithfulness and narrativity), see the tutorial in [`notebooks/feature_importance_narratives.ipynb`](notebooks/feature_importance_narratives.ipynb). For the counterfactual pipeline (generate a counterfactual with DiCE, verbalize it two ways, and score change-fidelity, coverage, and invented features), see [`notebooks/counterfactual_narratives.ipynb`](notebooks/counterfactual_narratives.ipynb).
 
 ### API keys
 
