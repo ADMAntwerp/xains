@@ -23,6 +23,12 @@ While `0.y.z`, minor versions may contain breaking changes.
   list decision in ADR 0004. ADR 0031.
 
 ### Added
+- `TemplatedHybridGenerator` (in `xains.generation`, exported top-level): a
+  deterministic, no-LLM generator for `mode="feature_importance_counterfactual"`.
+  It composes `TemplatedNarrativeGenerator` and `TemplatedCounterfactualGenerator`
+  into a two-section narrative (a feature-importance paragraph, a blank line, then
+  a counterfactual paragraph). Requires a request carrying both contributions and a
+  counterfactual. ADR 0037.
 
 - `Explainer.explain()` now dispatches claim extraction by mode. With
   `extract_narrative=True`, `mode="counterfactual"` runs
