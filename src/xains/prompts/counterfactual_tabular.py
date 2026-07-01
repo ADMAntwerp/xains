@@ -10,6 +10,7 @@ changed-feature lines. Tabular only. See ADR 0029.
 from xains._substitution import substitute
 from xains.config import ExplanationConfig
 from xains.counterfactuals import build_scenarios
+from xains.prompts._blocks import build_counterfactual_block
 from xains.prompts.base import PromptTemplate
 from xains.schema import DatasetSchema
 from xains.types import ExplanationRequest, TabularExplanationRequest
@@ -110,22 +111,7 @@ class CounterfactualTabularPromptTemplate(PromptTemplate):
 
         scenario = build_scenarios(request, schema)
         factual_label = scenario.factual_label
-
-        method_suffix = ""
-        if self._include_method and scenario.method is not None:
-            method_suffix = f" (method: {scenario.method})"
-
-        lead = (
-            f"To change the prediction from {scenario.factual_label} to "
-            f"{scenario.cf_label}:{method_suffix}"
-        )
-        change_lines = []
-        for chg in scenario.changes:
-            feat = schema.feature(chg.name)
-            unit = f" [{feat.unit}]" if feat.unit else ""
-            change_lines.append(f"  - {chg.name}: {chg.before} -> {chg.after}{unit}")
-
-        counterfactual_block = "\n".join([lead, *change_lines])
+        counterfactual_block = build_counterfactual_block(scenario, schema, self._include_method)
 
         values: dict[str, str] = {
             "target_name": schema.target.name,

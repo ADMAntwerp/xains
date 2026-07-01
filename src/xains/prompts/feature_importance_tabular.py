@@ -2,6 +2,7 @@
 
 from xains._substitution import substitute
 from xains.config import ExplanationConfig
+from xains.prompts._blocks import build_contribution_block
 from xains.prompts.base import PromptTemplate
 from xains.schema import DatasetSchema
 from xains.types import ExplanationRequest, TabularExplanationRequest
@@ -98,24 +99,9 @@ class FeatureImportanceTabularPromptTemplate(PromptTemplate):
             )
         class_label = schema.target.classes[predicted_class]
 
-        ordered = sorted(request.contributions, key=lambda c: -abs(c.importance))
-        k = config.top_k_features
-        if len(ordered) > k:
-            boundary = abs(ordered[k - 1].importance)
-            cut = k
-            while cut < len(ordered) and abs(ordered[cut].importance) == boundary:
-                cut += 1
-            ordered = ordered[:cut]
-
-        contribution_lines = []
-        for c in ordered:
-            feat = schema.feature(c.name)
-            unit = f" [{feat.unit}]" if feat.unit else ""
-            sign = "+" if c.importance >= 0 else "-"
-            contribution_lines.append(
-                f"- {c.name} = {c.value}{unit}: importance={sign}{abs(c.importance):g}"
-            )
-        contributions = "\n".join(contribution_lines)
+        contributions = build_contribution_block(
+            request.contributions, schema, config.top_k_features
+        )
 
         values: dict[str, str] = {
             "target_name": schema.target.name,

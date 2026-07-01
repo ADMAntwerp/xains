@@ -69,6 +69,11 @@ While `0.y.z`, minor versions may contain breaking changes.
   (`system_template=` / `user_template=` / `extra_placeholders=`).
   Tabular only this PR. ADR 0029.
 
+### Changed
+- Internal: the tabular prompt templates' contribution-block and counterfactual-block rendering is
+  extracted into shared helpers in `xains.prompts._blocks` (`build_contribution_block`,
+  `build_counterfactual_block`). No behavior change - the feature-importance and counterfactual
+  templates render byte-for-byte identical output. ADR 0038.
 
 ### Fixed
 - The default counterfactual generation prompt now instructs the LLM to state
