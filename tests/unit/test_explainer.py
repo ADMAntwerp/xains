@@ -17,6 +17,7 @@ from xains import (
 )
 from xains.prompts import EchoPromptTemplate
 from xains.providers import MockLLMProvider
+from xains.providers.base import LLMResponse
 
 # ---------------------------------------------------------------- #
 # End-to-end round-trip per modality                               #
@@ -409,3 +410,237 @@ def test_counterfactual_mode_judge_llm_none_raises_shared_value_error(
 
     with pytest.raises(ValueError, match=r"extract_narrative=True requires judge_llm"):
         explainer.explain(_cf_request(tabular_schema))
+
+
+# ---------------------------------------------------------------- #
+# Hybrid mode: dual extraction (ADR 0040)                          #
+# ---------------------------------------------------------------- #
+
+
+def _fi_payload_str() -> str:
+    """Canned FI-extraction JSON (matches _EXTRACTION_PROMPT_VERSION == '2')."""
+    import json
+
+    return json.dumps(
+        {
+            "features": {
+                "dti": {
+                    "rank": 1,
+                    "sign": 1,
+                    "value": 0.41,
+                    "assumption": "high debt drives default",
+                    "narrative_name": "debt-to-income",
+                }
+            },
+            "hallucinations": [],
+        }
+    )
+
+
+def _cf_payload_str() -> str:
+    """Canned CF-extraction JSON."""
+    import json
+
+    return json.dumps(
+        {
+            "changes": {
+                "dti": {
+                    "narrative_name": "debt-to-income ratio",
+                    "stated_before": 0.41,
+                    "stated_after": 0.20,
+                    "stated_direction": "decreased",
+                }
+            },
+            "invented": [],
+        }
+    )
+
+
+class _TokenCountingMock:
+    """Test-local LLM provider serving canned responses with configurable tokens_used.
+
+    Serves ``(text, tokens_used)`` pairs in order. Structurally satisfies
+    ``LLMProvider``.
+    """
+
+    def __init__(self, scripted: list[tuple[str, dict[str, int] | None]]) -> None:
+        self._scripted = scripted
+        self._idx = 0
+
+    def generate(self, system: str, user: str) -> LLMResponse:
+        text, tokens = self._scripted[self._idx]
+        self._idx += 1
+        return LLMResponse(text=text, model_name="mock-counting", tokens_used=tokens)
+
+
+def _hybrid_request(tabular_schema: DatasetSchema) -> TabularExplanationRequest:
+    """Tabular request with BOTH contributions and a counterfactual (for hybrid mode)."""
+    return TabularExplanationRequest(
+        features={"age": 29, "dti": 0.41},
+        prediction=Prediction(predicted_class=1, probabilities={0: 0.2, 1: 0.8}),
+        contributions=[
+            TabularContribution(name="dti", value=0.41, importance=0.37),
+            TabularContribution(name="age", value=29, importance=-0.12),
+        ],
+        counterfactual=TabularCounterfactual(predicted_class=0, features={"age": 29, "dti": 0.20}),
+    )
+
+
+def test_hybrid_mode_populates_both_extraction_channels(
+    tabular_schema: DatasetSchema,
+) -> None:
+    """mode='feature_importance_counterfactual' runs both extractors."""
+    from xains.prompts import HybridTabularPromptTemplate
+
+    gen_llm = MockLLMProvider(responses=["a hybrid narrative"])
+    # Judge is called TWICE: first for FI extraction, then for CF extraction.
+    judge_llm = MockLLMProvider(responses=[_fi_payload_str(), _cf_payload_str()])
+
+    explainer = Explainer(
+        schema=tabular_schema,
+        generator=LLMNarrativeGenerator(prompt_template=HybridTabularPromptTemplate(), llm=gen_llm),
+        config=ExplanationConfig(mode="feature_importance_counterfactual"),
+        judge_llm=judge_llm,
+    )
+
+    result = explainer.explain(_hybrid_request(tabular_schema))
+
+    assert result.mode == "feature_importance_counterfactual"
+    # BOTH channels populated:
+    assert result.narrative_extraction is not None
+    assert "dti" in result.narrative_extraction.features
+    assert result.counterfactual_extraction is not None
+    assert "dti" in result.counterfactual_extraction.changes
+
+
+def test_hybrid_mode_guardrail_tokens_used_is_element_wise_sum(
+    tabular_schema: DatasetSchema,
+) -> None:
+    """guardrail_tokens_used sums the two judge calls' token dicts element-wise."""
+    from xains.prompts import HybridTabularPromptTemplate
+
+    gen_llm = MockLLMProvider(responses=["a hybrid narrative"])
+    judge_llm = _TokenCountingMock(
+        [
+            (_fi_payload_str(), {"input": 100, "output": 20, "total": 120}),
+            (_cf_payload_str(), {"input": 80, "output": 15, "total": 95}),
+        ]
+    )
+
+    explainer = Explainer(
+        schema=tabular_schema,
+        generator=LLMNarrativeGenerator(prompt_template=HybridTabularPromptTemplate(), llm=gen_llm),
+        config=ExplanationConfig(mode="feature_importance_counterfactual"),
+        judge_llm=judge_llm,
+    )
+
+    result = explainer.explain(_hybrid_request(tabular_schema))
+
+    assert result.guardrail_tokens_used == {
+        "input": 180,
+        "output": 35,
+        "total": 215,
+    }
+
+
+def test_hybrid_mode_partial_fi_failure_still_populates_cf(
+    tabular_schema: DatasetSchema,
+) -> None:
+    """FI extraction fails to parse -> narrative_extraction None + advisory in guardrails;
+    CF extraction still populates counterfactual_extraction."""
+    from xains.prompts import HybridTabularPromptTemplate
+
+    gen_llm = MockLLMProvider(responses=["a hybrid narrative"])
+    judge_llm = MockLLMProvider(responses=["not json at all", _cf_payload_str()])
+
+    explainer = Explainer(
+        schema=tabular_schema,
+        generator=LLMNarrativeGenerator(prompt_template=HybridTabularPromptTemplate(), llm=gen_llm),
+        config=ExplanationConfig(mode="feature_importance_counterfactual"),
+        judge_llm=judge_llm,
+    )
+
+    result = explainer.explain(_hybrid_request(tabular_schema))
+
+    assert result.narrative_extraction is None
+    assert result.counterfactual_extraction is not None
+    assert result.guardrails is not None
+    fi_failures = [g for g in result.guardrails if g.name == "extract_narrative_claims"]
+    cf_failures = [g for g in result.guardrails if g.name == "extract_counterfactual_claims"]
+    assert len(fi_failures) == 1
+    assert fi_failures[0].severity == "advisory"
+    assert cf_failures == []
+
+
+def test_hybrid_mode_partial_cf_failure_still_populates_fi(
+    tabular_schema: DatasetSchema,
+) -> None:
+    """CF extraction fails to parse -> counterfactual_extraction None + advisory in guardrails;
+    FI extraction still populates narrative_extraction."""
+    from xains.prompts import HybridTabularPromptTemplate
+
+    gen_llm = MockLLMProvider(responses=["a hybrid narrative"])
+    judge_llm = MockLLMProvider(responses=[_fi_payload_str(), "not json at all"])
+
+    explainer = Explainer(
+        schema=tabular_schema,
+        generator=LLMNarrativeGenerator(prompt_template=HybridTabularPromptTemplate(), llm=gen_llm),
+        config=ExplanationConfig(mode="feature_importance_counterfactual"),
+        judge_llm=judge_llm,
+    )
+
+    result = explainer.explain(_hybrid_request(tabular_schema))
+
+    assert result.narrative_extraction is not None
+    assert result.counterfactual_extraction is None
+    assert result.guardrails is not None
+    fi_failures = [g for g in result.guardrails if g.name == "extract_narrative_claims"]
+    cf_failures = [g for g in result.guardrails if g.name == "extract_counterfactual_claims"]
+    assert fi_failures == []
+    assert len(cf_failures) == 1
+    assert cf_failures[0].severity == "advisory"
+
+
+# ---------------------------------------------------------------- #
+# _merge_token_counts direct unit tests                            #
+# ---------------------------------------------------------------- #
+
+
+def test_merge_token_counts_both_none_returns_none() -> None:
+    from xains.explainer import _merge_token_counts
+
+    assert _merge_token_counts(None, None) is None
+
+
+def test_merge_token_counts_left_none_returns_shallow_copy_of_right() -> None:
+    from xains.explainer import _merge_token_counts
+
+    b = {"input": 10, "output": 3}
+    result = _merge_token_counts(None, b)
+    assert result == {"input": 10, "output": 3}
+    assert result is not b  # shallow copy, not the same dict
+
+
+def test_merge_token_counts_right_none_returns_shallow_copy_of_left() -> None:
+    from xains.explainer import _merge_token_counts
+
+    a = {"input": 10, "output": 3}
+    result = _merge_token_counts(a, None)
+    assert result == {"input": 10, "output": 3}
+    assert result is not a
+
+
+def test_merge_token_counts_both_dicts_sums_union_of_keys() -> None:
+    from xains.explainer import _merge_token_counts
+
+    a = {"input": 10, "output": 3, "total": 13}
+    b = {"input": 5, "output": 2, "total": 7}
+    assert _merge_token_counts(a, b) == {"input": 15, "output": 5, "total": 20}
+
+
+def test_merge_token_counts_disjoint_keys_treated_as_zero() -> None:
+    from xains.explainer import _merge_token_counts
+
+    a = {"input": 10}
+    b = {"output": 5}
+    assert _merge_token_counts(a, b) == {"input": 10, "output": 5}

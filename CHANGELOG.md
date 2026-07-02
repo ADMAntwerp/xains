@@ -76,6 +76,13 @@ While `0.y.z`, minor versions may contain breaking changes.
   Tabular only this PR. ADR 0029.
 
 ### Changed
+- `Explainer.explain()` now runs dual extraction for
+  `mode="feature_importance_counterfactual"`: both the feature-importance and the
+  counterfactual extractor run over the generated narrative, populating both
+  `narrative_extraction` and `counterfactual_extraction`. Each extractor's advisory
+  failure is recorded independently, and `guardrail_tokens_used` is the element-wise
+  sum of the two judge calls' token counts. Previously the hybrid mode fell through to
+  feature-importance extraction only (ADR 0033); this resolves that deferral. ADR 0040.
 - Internal: the tabular prompt templates' contribution-block and counterfactual-block rendering is
   extracted into shared helpers in `xains.prompts._blocks` (`build_contribution_block`,
   `build_counterfactual_block`). No behavior change - the feature-importance and counterfactual

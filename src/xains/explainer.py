@@ -35,6 +35,24 @@ from xains.types import (
 )
 
 
+def _merge_token_counts(
+    a: dict[str, int] | None, b: dict[str, int] | None
+) -> dict[str, int] | None:
+    """Element-wise sum of two token-count dicts.
+
+    Used by the hybrid extraction dispatch (ADR 0040) to combine the FI and
+    CF judge calls' token usage. Returns ``None`` only when both inputs are
+    ``None``; when only one side is ``None``, the other survives untouched
+    (a shallow copy). When both are dicts, keys from the union are summed
+    (missing keys treated as 0).
+    """
+    if a is None:
+        return dict(b) if b is not None else None
+    if b is None:
+        return dict(a)
+    return {k: a.get(k, 0) + b.get(k, 0) for k in a.keys() | b.keys()}
+
+
 class Explainer:
     """Generate natural-language explanations from pre-computed attributions."""
 
@@ -79,11 +97,13 @@ class Explainer:
                     "to Explainer(...). Pass an LLMProvider as judge_llm, or "
                     "set ExplanationConfig(extract_narrative=False)."
                 )
-            # Dispatch extraction by mode (ADR 0033). The "feature_importance_counterfactual"
-            # hybrid mode falls through to the FI branch (unchanged) - no library-provided
-            # hybrid generator exists, so a hybrid request reaches here only when the user
-            # paired a single-mode generator with the hybrid config, and FI extraction is
-            # the closest correct behavior.
+            # Dispatch extraction by mode (ADR 0033, ADR 0040):
+            # - "counterfactual"  -> CF extraction only
+            # - "feature_importance" -> FI extraction only
+            # - "feature_importance_counterfactual" -> both extractors run
+            #   over the same generated text; token counts merged
+            #   element-wise, each extraction's advisory failure appended
+            #   independently.
             if mode == "counterfactual":
                 cf_extraction, judge_response, failure = extract_counterfactual_claims(
                     gen.text, request, self.schema, self.judge_llm
@@ -95,7 +115,29 @@ class Explainer:
                     if guardrails is None:
                         guardrails = []
                     guardrails.append(failure)
-            else:  # "feature_importance" or "feature_importance_counterfactual"
+            elif mode == "feature_importance_counterfactual":
+                fi_extraction, fi_judge_response, fi_failure = extract_narrative_claims(
+                    gen.text, request, self.schema, self.judge_llm
+                )
+                cf_extraction, cf_judge_response, cf_failure = extract_counterfactual_claims(
+                    gen.text, request, self.schema, self.judge_llm
+                )
+                guardrail_tokens_used = _merge_token_counts(
+                    fi_judge_response.tokens_used, cf_judge_response.tokens_used
+                )
+                if fi_extraction is not None:
+                    narrative_extraction = fi_extraction
+                if cf_extraction is not None:
+                    counterfactual_extraction = cf_extraction
+                if fi_failure is not None:
+                    if guardrails is None:
+                        guardrails = []
+                    guardrails.append(fi_failure)
+                if cf_failure is not None:
+                    if guardrails is None:
+                        guardrails = []
+                    guardrails.append(cf_failure)
+            else:  # "feature_importance"
                 extraction, judge_response, failure = extract_narrative_claims(
                     gen.text, request, self.schema, self.judge_llm
                 )
