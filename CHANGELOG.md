@@ -95,6 +95,14 @@ While `0.y.z`, minor versions may contain breaking changes.
   templates render byte-for-byte identical output. ADR 0038.
 
 ### Fixed
+- The feature-importance extraction prompt now anchors the `sign` field on the actual
+  predicted-class label, injected per request. The judge previously inverted `sign` on
+  predictions whose class label carries negative valence (for example `Bad credit risk`),
+  reading it as good-or-bad-for-the-subject rather than probability direction, so a
+  faithfully-narrated feature that raised the predicted class's probability was scored with
+  the wrong sign. The prompt now states the direction relative to the named label and that a
+  feature raising that label's probability is +1 regardless of whether the outcome is
+  desirable. `_EXTRACTION_PROMPT_VERSION` is bumped `2` -> `3`. ADR 0042.
 - The default counterfactual generation prompt now instructs the LLM to state
   each changed feature's from-value and to-value explicitly, using the values
   as written rather than rephrasing them. This makes the narrative carry the

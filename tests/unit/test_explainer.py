@@ -418,7 +418,7 @@ def test_counterfactual_mode_judge_llm_none_raises_shared_value_error(
 
 
 def _fi_payload_str() -> str:
-    """Canned FI-extraction JSON (matches _EXTRACTION_PROMPT_VERSION == '2')."""
+    """Canned FI-extraction JSON (matches _EXTRACTION_PROMPT_VERSION == '3')."""
     import json
 
     return json.dumps(

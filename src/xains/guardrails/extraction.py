@@ -1,4 +1,4 @@
-"""Narrative-claim extraction (prompt v2: resolution-at-extraction).
+"""Narrative-claim extraction (prompt v3: label-anchored sign convention).
 
 A single LLM call inspects the generator's narrative and returns structured
 per-feature claims. The LLM resolves each narrative mention to a schema
@@ -7,8 +7,9 @@ hallucination (emitted in ``hallucinations[]``). See ADR 0007.
 
 Schema follows Ichmoukhamedov et al. 2024 ("How good is my story? Towards
 quantitative metrics for evaluating LLM-generated XAI narratives",
-arXiv:2412.10220), Fig. 3, with the resolution channel split added in
-``_EXTRACTION_PROMPT_VERSION = "2"``.
+arXiv:2412.10220), Fig. 3, with the resolution channel split added in v2
+and the sign-convention anchoring on the actual predicted-class label
+added in v3 (ADR 0042).
 """
 
 import json
@@ -28,7 +29,7 @@ from xains.providers.base import LLMProvider, LLMResponse
 from xains.schema import DatasetSchema
 from xains.types import TabularExplanationRequest
 
-_EXTRACTION_PROMPT_VERSION = "2"
+_EXTRACTION_PROMPT_VERSION = "3"
 
 _FENCE_RE = re.compile(r"^```(?:json)?\s*(.*?)\s*```\s*$", re.DOTALL)
 
@@ -86,8 +87,10 @@ Definitions:
   order the text describes, not the model's importance ranking. Ranks across
   features AND hallucinations together must form a dense permutation of
   1..N where N = total mentions.
-- ``sign``: direction the narrative claims for this feature (+1 increases
-  the predicted class, -1 decreases it, 0 unspecified).
+- ``sign``: the probability direction the narrative claims for this feature,
+  relative to the predicted class. See the ``## Sign convention`` section
+  of the user prompt for the exact anchoring on the actual predicted-class
+  label. Emit +1 / -1 / 0.
 - ``value``: the feature value as cited in the text, or null if unnamed.
 - ``assumption``: the narrative's reason / clause about this feature.
 - ``narrative_name``: the feature name as it appears in the narrative
@@ -124,6 +127,21 @@ def _build_user_prompt(text: str, request: TabularExplanationRequest, schema: Da
         f"- {c.name}: value={c.value}, importance={c.importance}" for c in request.contributions
     ]
 
+    sign_block = (
+        "## Sign convention\n"
+        f"`sign` is the probability direction the narrative claims for the "
+        f"feature, relative to the predicted class `{label}`.\n"
+        f"- Use +1 if the narrative describes the feature as INCREASING the "
+        f"probability of `{label}` (even when `{label}` is an unfavorable "
+        f"outcome).\n"
+        f"- Use -1 if the narrative describes the feature as DECREASING that "
+        f"probability.\n"
+        "- Use 0 when the narrative does not commit to a direction.\n"
+        "This is about probability direction, not whether the feature is "
+        f"good or bad for the subject: a feature that makes `{label}` more "
+        "likely is +1 regardless of whether that outcome is desirable."
+    )
+
     return (
         "## Resolution vocabulary (schema features)\n"
         "Use these exact names as keys under `features`. Any mention you "
@@ -132,6 +150,7 @@ def _build_user_prompt(text: str, request: TabularExplanationRequest, schema: Da
         f"{schema_block}\n\n"
         "## Prediction\n" + "\n".join(pred_lines) + "\n\n"
         "## Contributions\n" + "\n".join(contrib_lines) + "\n\n"
+        f"{sign_block}\n\n"
         "## Explanation text under review\n"
         "```\n"
         f"{text}\n"

@@ -1,8 +1,10 @@
-"""Unit tests for extract_narrative_claims (prompt v2: resolution-at-extraction).
+"""Unit tests for extract_narrative_claims (prompt v3: label-anchored sign).
 
 The LLM resolves narrative mentions to schema feature names at extraction
 time. ``NarrativeExtraction.features`` is keyed by schema name; unresolved
 mentions go into ``NarrativeExtraction.hallucinations``. See ADR 0007.
+The v3 prompt anchors ``sign`` on the actual predicted-class label
+(ADR 0042).
 """
 
 import json
@@ -98,7 +100,7 @@ def test_extraction_parses_well_formed_json(
     assert extraction.hallucinations == []
 
 
-def test_extraction_records_prompt_version_2(
+def test_extraction_records_prompt_version_3(
     schema: DatasetSchema, request_obj: TabularExplanationRequest
 ) -> None:
     llm = MockLLMProvider(responses=[_ok_payload()], model_name="mock-judge")
@@ -106,7 +108,7 @@ def test_extraction_records_prompt_version_2(
         text="x", request=request_obj, schema=schema, judge_llm=llm
     )
     assert extraction is not None
-    assert extraction.prompt_version == "2"
+    assert extraction.prompt_version == "3"
 
 
 def test_extraction_records_model_name_from_response(
@@ -466,7 +468,7 @@ def test_extraction_malformed_json_returns_none_and_failure_result(
     assert failure.severity == "advisory"
     assert failure.passed is False
     assert failure.details["reason"] == "could_not_parse_extraction_output"
-    assert failure.details["prompt_version"] == "2"
+    assert failure.details["prompt_version"] == "3"
     assert failure.details["model_name"] == "mock-judge"
     assert "raw" in failure.details
     assert response.text == "this is not json at all"
@@ -555,3 +557,100 @@ def test_feature_claim_resolved_to_none_implies_hallucination_role() -> None:
             prompt_version="2",
             model_name="x",
         )
+
+
+# ------------------------------------------------------ sign convention anchoring (ADR 0042)
+
+
+def _neg_valence_schema() -> DatasetSchema:
+    return DatasetSchema(
+        modality=Modality.TABULAR,
+        name="credit_risk",
+        description="Predicts loan default.",
+        target=TargetSchema(
+            name="default",
+            description="Whether the applicant defaulted.",
+            classes={0: "Repaid", 1: "Bad credit risk"},
+        ),
+        features=[
+            FeatureSchema(name="age", dtype="numeric", description="Applicant age."),
+            FeatureSchema(name="dti", dtype="numeric", description="Debt-to-income ratio."),
+        ],
+    )
+
+
+def _pos_valence_schema() -> DatasetSchema:
+    return DatasetSchema(
+        modality=Modality.TABULAR,
+        name="credit_risk",
+        description="Predicts loan repayment.",
+        target=TargetSchema(
+            name="default",
+            description="Whether the applicant repaid.",
+            classes={0: "Bad credit risk", 1: "Good credit risk"},
+        ),
+        features=[
+            FeatureSchema(name="age", dtype="numeric", description="Applicant age."),
+            FeatureSchema(name="dti", dtype="numeric", description="Debt-to-income ratio."),
+        ],
+    )
+
+
+def _request_for(schema_obj: DatasetSchema, predicted_class: int) -> TabularExplanationRequest:
+    return TabularExplanationRequest(
+        features={"age": 29, "dti": 0.41},
+        prediction=Prediction(predicted_class=predicted_class),
+        contributions=[
+            TabularContribution(name="dti", value=0.41, importance=0.37),
+            TabularContribution(name="age", value=29, importance=-0.12),
+        ],
+    )
+
+
+def test_fi_extraction_user_prompt_anchors_sign_to_predicted_class_label() -> None:
+    """The FI extraction user prompt anchors ``sign`` on the resolved
+    predicted-class label, so the LLM does not fall back to a valence
+    reading on labels like 'Bad credit risk'. See ADR 0042."""
+    from xains.guardrails.extraction import _build_user_prompt
+
+    schema_obj = _neg_valence_schema()
+    prompt = _build_user_prompt(
+        "some narrative", _request_for(schema_obj, predicted_class=1), schema_obj
+    )
+
+    assert "## Sign convention" in prompt
+    # The resolved label is present in the anchored instruction.
+    assert "Bad credit risk" in prompt
+    # The anchoring is a probability direction, not a valence reading.
+    assert "probability direction" in prompt
+    assert "not whether the feature is good or bad for the subject" in prompt
+    # The "even when ... unfavorable outcome" clarification is present.
+    assert "unfavorable" in prompt
+
+
+def test_fi_extraction_user_prompt_sign_label_is_dynamic_across_predictions() -> None:
+    """A different predicted class renders a different label in the sign
+    section — proving the label is resolved at build time, not hard-coded."""
+    from xains.guardrails.extraction import _build_user_prompt
+
+    schema_obj = _neg_valence_schema()
+    bad_prompt = _build_user_prompt("n", _request_for(schema_obj, predicted_class=1), schema_obj)
+    repaid_prompt = _build_user_prompt("n", _request_for(schema_obj, predicted_class=0), schema_obj)
+
+    # Sign anchor tracks the actual predicted class.
+    assert "Bad credit risk" in bad_prompt
+    assert "Repaid" in repaid_prompt
+    # And swapping the prediction swaps the anchor.
+    assert "Bad credit risk" not in repaid_prompt.split("## Sign convention")[1]
+    assert "Repaid" not in bad_prompt.split("## Sign convention")[1]
+
+
+def test_fi_extraction_user_prompt_anchors_on_positive_valence_label_too() -> None:
+    """The anchoring is generic across label valence — no hard-coded 'Bad'."""
+    from xains.guardrails.extraction import _build_user_prompt
+
+    schema_obj = _pos_valence_schema()
+    prompt = _build_user_prompt("n", _request_for(schema_obj, predicted_class=1), schema_obj)
+
+    assert "## Sign convention" in prompt
+    assert "Good credit risk" in prompt
