@@ -12,10 +12,12 @@ from xains.prompts.base import PromptTemplate
 from xains.prompts.counterfactual_tabular import CounterfactualTabularPromptTemplate
 from xains.prompts.echo import EchoPromptTemplate
 from xains.prompts.feature_importance_tabular import FeatureImportanceTabularPromptTemplate
+from xains.prompts.hybrid_tabular import HybridTabularPromptTemplate
 
 __all__ = [
     "CounterfactualTabularPromptTemplate",
     "EchoPromptTemplate",
     "FeatureImportanceTabularPromptTemplate",
+    "HybridTabularPromptTemplate",
     "PromptTemplate",
 ]

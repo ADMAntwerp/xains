@@ -23,6 +23,12 @@ While `0.y.z`, minor versions may contain breaking changes.
   list decision in ADR 0004. ADR 0031.
 
 ### Added
+- `HybridTabularPromptTemplate` (in `xains.prompts`): the LLM prompt template for
+  `mode="feature_importance_counterfactual"`. It composes the shared block builders
+  (`build_contribution_block`, `build_counterfactual_block`) into one two-section prompt,
+  a feature-importance part explaining the prediction and a counterfactual part describing
+  what would flip it. The counterfactual half carries the before/after instruction from
+  ADR 0036. ADR 0039.
 - `TemplatedHybridGenerator` (in `xains.generation`, exported top-level): a
   deterministic, no-LLM generator for `mode="feature_importance_counterfactual"`.
   It composes `TemplatedNarrativeGenerator` and `TemplatedCounterfactualGenerator`
