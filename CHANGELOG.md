@@ -23,6 +23,12 @@ While `0.y.z`, minor versions may contain breaking changes.
   list decision in ADR 0004. ADR 0031.
 
 ### Added
+- `HybridGrades` and `grade_hybrid` (in `xains.metrics`, exported top-level): grading
+  for `mode="feature_importance_counterfactual"`. `grade_hybrid` composes
+  `grade_extraction` and `grade_counterfactual`, returning a `HybridGrades` that holds an
+  `ExtractionGrades` and a `CounterfactualGrades` side by side. Both sub-fields are optional,
+  so a partially-extracted hybrid result grades the half that is present. Render by unpacking
+  into `render_grades(extraction=..., counterfactual=...)`. ADR 0041.
 - `HybridTabularPromptTemplate` (in `xains.prompts`): the LLM prompt template for
   `mode="feature_importance_counterfactual"`. It composes the shared block builders
   (`build_contribution_block`, `build_counterfactual_block`) into one two-section prompt,

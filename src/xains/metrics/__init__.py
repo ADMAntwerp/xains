@@ -21,8 +21,10 @@ from xains.metrics.grader import (
     EXTRACTION_GRADE_DIRECTIONS,
     CounterfactualGrades,
     ExtractionGrades,
+    HybridGrades,
     grade_counterfactual,
     grade_extraction,
+    grade_hybrid,
 )
 from xains.metrics.narrativity import (
     NARRATIVITY_GRADE_DIRECTIONS,
@@ -53,6 +55,7 @@ __all__ = [
     "DisabledProvider",
     "ExtractionGrades",
     "HuggingFacePerplexityProvider",
+    "HybridGrades",
     "NarrativityGrades",
     "OpenAICompatibleEchoProvider",
     "PerplexityProvider",
@@ -66,6 +69,7 @@ __all__ = [
     "fdr",
     "grade_counterfactual",
     "grade_extraction",
+    "grade_hybrid",
     "grade_narrativity",
     "hallucination_count",
     "invented_features",

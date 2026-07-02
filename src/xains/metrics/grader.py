@@ -103,3 +103,67 @@ def grade_counterfactual(
         invented_features=invented_features(extraction),
         prompt_version=extraction.prompt_version,
     )
+
+
+# ========================================================================
+# Hybrid grader (ADR 0041) — composes the FI and CF graders
+# ========================================================================
+
+
+class HybridGrades(BaseModel):
+    """Container that holds an :class:`ExtractionGrades` and a
+    :class:`CounterfactualGrades` side by side (ADR 0041).
+
+    ``HybridGrades`` composes — it does not inherit. The abstract-grades-base
+    question ADR 0032 deferred to the hybrid third case is resolved here:
+    the answer is compose, not inherit. Both ``ExtractionGrades`` and
+    ``CounterfactualGrades`` carry fields named ``coverage`` and
+    ``prompt_version`` whose meanings differ; nesting keeps each
+    unambiguous where flattening or a shared base would not.
+
+    Both sub-fields are ``Optional`` so partial grading (only FI or only
+    CF present) works without raising; a fully-empty ``HybridGrades()``
+    is also valid.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    feature_importance: ExtractionGrades | None = None
+    counterfactual: CounterfactualGrades | None = None
+
+
+def grade_hybrid(
+    narrative_extraction: NarrativeExtraction | None,
+    counterfactual_extraction: CounterfactualExtraction | None,
+    request: TabularExplanationRequest,
+    schema: DatasetSchema,
+    narrative_text: str,
+    k: int = 10,
+) -> HybridGrades:
+    """Compose :func:`grade_extraction` and :func:`grade_counterfactual`.
+
+    Grades whichever half is present and leaves the missing half ``None``
+    (mirroring the Explainer's partial-extraction dispatch in ADR 0040).
+    Both inputs ``None`` returns an empty :class:`HybridGrades` — no raise.
+
+    ADR 0041 resolves the abstract-grades-base question ADR 0032 deferred
+    by composing rather than inheriting.
+
+    To render the result, unpack into :func:`render_grades`::
+
+        render_grades(
+            extraction=hg.feature_importance,
+            counterfactual=hg.counterfactual,
+        )
+    """
+    fi = (
+        grade_extraction(narrative_extraction, request, schema, narrative_text, k=k)
+        if narrative_extraction is not None
+        else None
+    )
+    cf = (
+        grade_counterfactual(counterfactual_extraction, request, schema)
+        if counterfactual_extraction is not None
+        else None
+    )
+    return HybridGrades(feature_importance=fi, counterfactual=cf)
